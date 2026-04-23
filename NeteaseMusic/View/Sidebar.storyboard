@@ -99,8 +99,8 @@
                                                                                                     <constraint firstAttribute="width" constant="16" id="F2p-k6-cQb"/>
                                                                                                     <constraint firstAttribute="width" secondItem="HS7-Vp-Pg9" secondAttribute="height" multiplier="1:1" id="OOS-cd-UyO"/>
                                                                                                 </constraints>
-                                                                                                <imageCell key="cell" refusesFirstResponder="YES" imageScaling="proportionallyDown" image="NSActionTemplate" id="z1R-P2-kd9"/>
-                                                                                                <color key="contentTintColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                                                                <imageCell key="cell" refusesFirstResponder="YES" imageScaling="proportionallyDown" id="z1R-P2-kd9"/>
+                                                                                                <color key="contentTintColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                                                                                                 <connections>
                                                                                                     <binding destination="Hcm-a1-mgv" name="value" keyPath="objectValue.icon" id="5gO-Rr-e7O"/>
                                                                                                 </connections>

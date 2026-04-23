@@ -9,6 +9,8 @@
 import Cocoa
 
 class TrackTableViewController: NSViewController {
+    private let playbackCommands = PlaybackCommands.shared
+    private let playbackViewModel = PlaybackViewModel.shared
 
     @IBOutlet weak var scrollView: UnresponsiveScrollView!
     @IBOutlet weak var tableView: NSTableView!
@@ -16,9 +18,7 @@ class TrackTableViewController: NSViewController {
     @IBAction func doubleAction(_ sender: NSTableView) {
         let clickedRow = sender.clickedRow
         guard let track = tracks[safe: clickedRow] else { return }
-        let pc = PlayCore.shared
-        pc.playlist = tracks
-        pc.start(tracks, id: track.id)
+        playbackCommands.start(tracks, id: track.id)
     }
     
     @objc dynamic var tracks = [Track]() {
@@ -39,6 +39,12 @@ class TrackTableViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         scrollView.responsiveScrolling = true
+        tableView.delegate = self
+        tableView.selectionHighlightStyle = .none
+        tableView.rowHeight = 30
+        tableView.intercellSpacing = NSSize(width: 0, height: 4)
+        tableView.usesAlternatingRowBackgroundColors = false
+        tableView.backgroundColor = .clear
         initTableColumn()
         initObservers()
     }
@@ -46,32 +52,31 @@ class TrackTableViewController: NSViewController {
     func initObservers() {
         currentTrackObserver?.invalidate()
         playerStateObserver?.invalidate()
-        currentTrackObserver = PlayCore.shared.observe(\.currentTrack, options: [.new, .initial]) { (pc, _) in
-            self.initCurrentTrack()
+        currentTrackObserver = playbackViewModel.observe(\.currentTrack, options: [.new, .initial]) { [weak self] _, _ in
+            self?.initCurrentTrack()
         }
         
-        playerStateObserver =  PlayCore.shared.observe(\.playerState, options: [.new, .initial]) { (pc, _) in
-            self.tracks.first {
+        playerStateObserver =  playbackViewModel.observe(\.playerState, options: [.new, .initial]) { [weak self] viewModel, _ in
+            self?.tracks.first {
                 $0.isCurrentTrack
-                }?.isPlaying = pc.isCurrentTrackPlaying
+                }?.isPlaying = viewModel.isCurrentTrackPlaying
         }
     }
     
     func initCurrentTrack() {
-        let pc = PlayCore.shared
         tracks.filter {
             $0.isCurrentTrack
         }.forEach {
             $0.isCurrentTrack = false
         }
         
-        guard let c = pc.currentTrack else { return }
+        guard let c = playbackViewModel.currentTrack else { return }
 
         let t = tracks.first {
             $0.from == c.from && $0.id == c.id
         }
         t?.isCurrentTrack = true
-        t?.isPlaying = pc.isCurrentTrackPlaying
+        t?.isPlaying = playbackViewModel.isCurrentTrackPlaying
     }
     
     func initTableColumn() {
@@ -89,4 +94,68 @@ class TrackTableViewController: NSViewController {
         playerStateObserver?.invalidate()
     }
     
+}
+
+extension TrackTableViewController: NSTableViewDelegate {
+    func tableView(_ tableView: NSTableView, rowViewForRow row: Int) -> NSTableRowView? {
+        TahoeTableRowView()
+    }
+}
+
+final class TahoeTableRowView: NSTableRowView {
+    private var hover = false {
+        didSet { needsDisplay = true }
+    }
+    private var trackingAreaRef: NSTrackingArea?
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        selectionHighlightStyle = .none
+        wantsLayer = true
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        selectionHighlightStyle = .none
+        wantsLayer = true
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let trackingAreaRef {
+            removeTrackingArea(trackingAreaRef)
+        }
+        let area = NSTrackingArea(rect: bounds,
+                                  options: [.mouseEnteredAndExited, .activeInActiveApp, .inVisibleRect],
+                                  owner: self,
+                                  userInfo: nil)
+        addTrackingArea(area)
+        trackingAreaRef = area
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        hover = true
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        hover = false
+    }
+
+    override func drawSelection(in dirtyRect: NSRect) {
+    }
+
+    override func drawBackground(in dirtyRect: NSRect) {
+        super.drawBackground(in: dirtyRect)
+
+        let rect = bounds.insetBy(dx: 6, dy: 1)
+        let path = NSBezierPath(roundedRect: rect, xRadius: 8, yRadius: 8)
+
+        if isSelected {
+            NSColor.selectedContentBackgroundColor.withAlphaComponent(0.5).setFill()
+            path.fill()
+        } else if hover {
+            NSColor.labelColor.withAlphaComponent(0.045).setFill()
+            path.fill()
+        }
+    }
 }

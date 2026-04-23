@@ -12,6 +12,7 @@ import GSPlayer
 
 class ViewControllerManager: NSObject {
     static let shared = ViewControllerManager()
+    private let playbackCommands = PlaybackCommands.shared
     
     var fmVC: FMViewController?
     
@@ -36,7 +37,7 @@ class ViewControllerManager: NSObject {
             
             tabVC.startPlay(true)
         } else {
-            pc.togglePlayPause()
+            playbackCommands.togglePlayPause()
         }
     }
     
@@ -129,18 +130,17 @@ class ViewControllerManager: NSObject {
             let k = pKey
             
             hotKey.keyDownHandler = {
-                let playCore = PlayCore.shared
                 switch k {
                 case .playGlobal:
                     self.togglePlayPause()
                 case .volumeUpGlobal:
-                    playCore.increaseVolume()
+                    self.playbackCommands.increaseVolume()
                 case .volumeDownGlobal:
-                    playCore.decreaseVolume()
+                    self.playbackCommands.decreaseVolume()
                 case .nextGlobal:
-                    playCore.nextSong()
+                    self.playbackCommands.nextSong()
                 case .preGlobal:
-                    playCore.previousSong()
+                    self.playbackCommands.previousSong()
                 case .likeGlobal:
                     break
                 case .miniGlobal:

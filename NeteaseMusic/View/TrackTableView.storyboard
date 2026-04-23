@@ -67,8 +67,8 @@
                                                                         <constraint firstAttribute="width" secondItem="m4B-yM-Izw" secondAttribute="height" multiplier="1:1" id="kMc-vC-udc"/>
                                                                         <constraint firstAttribute="width" constant="12" id="ned-gC-TSq"/>
                                                                     </constraints>
-                                                                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageAlignment="left" imageScaling="proportionallyUpOrDown" image="playstate" id="XYf-Xu-8Bc"/>
-                                                                    <color key="contentTintColor" name="systemRedColor" catalog="System" colorSpace="catalog"/>
+                                                                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageAlignment="left" imageScaling="proportionallyUpOrDown" id="XYf-Xu-8Bc"/>
+                                                                    <color key="contentTintColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
                                                                     <connections>
                                                                         <binding destination="Hg5-UH-9pV" name="hidden" keyPath="objectValue.isCurrentTrack" id="m9O-hi-J9L">
                                                                             <dictionary key="options">
@@ -387,7 +387,4 @@
             <point key="canvasLocation" x="193.5" y="91.5"/>
         </scene>
     </scenes>
-    <resources>
-        <image name="playstate" width="14" height="13"/>
-    </resources>
 </document>

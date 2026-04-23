@@ -11,6 +11,8 @@ import AVFoundation
 import PromiseKit
 
 class FMViewController: NSViewController, ContentTabViewController {
+    private let playbackCommands = PlaybackCommands.shared
+    private let playbackViewModel = PlaybackViewModel.shared
     @IBOutlet weak var coverButton1: FMCoverButton!
     @IBOutlet weak var coverButton1LeadingLC: NSLayoutConstraint!
     @IBOutlet weak var coverButton1WidthLC: NSLayoutConstraint!
@@ -34,17 +36,16 @@ class FMViewController: NSViewController, ContentTabViewController {
     
     @IBAction func buttonAction(_ sender: NSButton) {
         let pc = PlayCore.shared
-        if pc.fmMode {
-            pc.togglePlayPause()
+        if playbackViewModel.fmMode {
+            playbackCommands.togglePlayPause()
         } else {
             startPlay(true)
         }
     }
     
     @IBAction func previousSong(_ sender: FMCoverButton) {
-        let pc = PlayCore.shared
-        guard pc.fmMode, sender.index == 1 else { return }
-        pc.previousSong()
+        guard playbackViewModel.fmMode, sender.index == 1 else { return }
+        playbackCommands.previousSong()
     }
     
     var currentTrackObserver: NSKeyValueObservation?
@@ -73,18 +74,19 @@ class FMViewController: NSViewController, ContentTabViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         ViewControllerManager.shared.fmVC = self
+        configureTahoeAppearance()
         updatePlayButton(true)
         initCoverButtonsArray()
         
-        let pc = PlayCore.shared
-        currentTrackObserver = pc.observe(\.currentTrack, options: [.initial, .new, .old]) { pc, changes in
-            guard pc.fmMode,
+        currentTrackObserver = playbackViewModel.observe(\.currentTrack, options: [.initial, .new, .old]) { [weak self] viewModel, changes in
+            guard let self,
+                  viewModel.fmMode,
                   let oldTrack = changes.oldValue,
                   let newTrack = changes.newValue,
                   let old = oldTrack,
                   let new = newTrack
             else { return }
-            self.currentTrackId = pc.currentTrack?.id ?? -1
+            self.currentTrackId = viewModel.currentTrack?.id ?? -1
             self.loadFMTracks().done(on: .main) {
                 var oldI = -1
                 var newI = -1
@@ -110,15 +112,16 @@ class FMViewController: NSViewController, ContentTabViewController {
             }
         }
         
-        playerStatueObserver = pc.observe(\.playerState, options: [.initial, .new]) { pc, changes in
-            guard pc.fmMode else { return }
-            self.updateCoverButtonStatus(pc.playerState)
+        playerStatueObserver = playbackViewModel.observe(\.playerState, options: [.initial, .new]) { [weak self] viewModel, _ in
+            guard viewModel.fmMode else { return }
+            self?.updateCoverButtonStatus(viewModel.playerState)
         }
         
-        fmModeObserver = PlayCore.shared.observe(\.fmMode, options: [.initial, .new]) { pc, _ in
-            guard let vc = self.lyricViewController() else { return }
-            if pc.fmMode {
-                self.updateCoverButtonStatus(pc.playerState)
+        fmModeObserver = playbackViewModel.observe(\.fmMode, options: [.initial, .new]) { [weak self] viewModel, _ in
+            guard let self,
+                  let vc = self.lyricViewController() else { return }
+            if viewModel.fmMode {
+                self.updateCoverButtonStatus(self.playbackViewModel.playerState)
                 vc.addPlayProgressObserver()
             } else {
                 self.updateCoverButtonStatus(.paused)
@@ -161,10 +164,9 @@ class FMViewController: NSViewController, ContentTabViewController {
     }
     
     func startPlay(_ all: Bool) {
-        let pc = PlayCore.shared
-        pc.start(fmPlaylist,
-                 id: currentTrackId,
-                 enterFMMode: true)
+        playbackCommands.start(fmPlaylist,
+                               id: currentTrackId,
+                               enterFMMode: true)
     }
     
     func initCoverButtonsArray() {
@@ -325,7 +327,7 @@ class FMViewController: NSViewController, ContentTabViewController {
     }
     
     func updateCoverButtonStatus(_ state: PlayCore.PlayerState) {
-        guard PlayCore.shared.fmMode else {
+        guard playbackViewModel.fmMode else {
             updatePlayButton(true)
             return
         }
@@ -340,9 +342,31 @@ class FMViewController: NSViewController, ContentTabViewController {
     }
     
     func updatePlayButton(_ paused: Bool) {
-        let name = paused ? "play.circle.Light-L" : "pause.circle.Light-L"
-        playButton.image = NSImage(named: .init(name))
-        playButton.contentTintColor = .nColor
+        if #available(macOS 11.0, *) {
+            let config = NSImage.SymbolConfiguration(pointSize: 18, weight: .semibold)
+            let symbol = paused ? "play.fill" : "pause.fill"
+            playButton.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?.withSymbolConfiguration(config)
+        } else {
+            let name = paused ? "play.circle.Light-L" : "pause.circle.Light-L"
+            playButton.image = NSImage(named: .init(name))
+        }
+        playButton.contentTintColor = .labelColor
+    }
+
+    private func configureTahoeAppearance() {
+        playButton.isBordered = false
+        playButton.wantsLayer = true
+        playButton.layer?.cornerRadius = 24
+        playButton.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.16).cgColor
+        playButton.layer?.borderWidth = 1
+        playButton.layer?.borderColor = NSColor.white.withAlphaComponent(0.14).cgColor
+        playButton.layer?.shadowColor = NSColor.black.withAlphaComponent(0.18).cgColor
+        playButton.layer?.shadowOpacity = 1
+        playButton.layer?.shadowRadius = 16
+        playButton.layer?.shadowOffset = CGSize(width: 0, height: -4)
+        if #available(macOS 10.15, *) {
+            playButton.layer?.cornerCurve = .continuous
+        }
     }
     
     func lyricViewController() -> LyricViewController? {

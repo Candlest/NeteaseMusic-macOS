@@ -28,6 +28,8 @@
 		012F115822603CE8002D5599 /* SidePlaylistViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 012F115722603CE8002D5599 /* SidePlaylistViewController.swift */; };
 		012F2F412250613F00086870 /* PlayCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 012F2F402250613F00086870 /* PlayCore.swift */; };
 		012F2F432250619A00086870 /* NeteaseMusicAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 012F2F422250619A00086870 /* NeteaseMusicAPI.swift */; };
+		012F2F492A18D00100086870 /* PlaybackViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 012F2F482A18D00100086870 /* PlaybackViewModel.swift */; };
+		012F2F4B2A18D00D00086870 /* PlaybackCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 012F2F4A2A18D00D00086870 /* PlaybackCommands.swift */; };
 		012F2F462250F8DE00086870 /* LoginViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 012F2F452250F8DE00086870 /* LoginViewController.swift */; };
 		012FB7DA23337FCD007F7247 /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 012FB7D923337FCD007F7247 /* Preferences.swift */; };
 		012FB7DD233389E1007F7247 /* Preferences.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 012FB7DC233389E1007F7247 /* Preferences.storyboard */; };
@@ -181,6 +183,8 @@
 		012F115722603CE8002D5599 /* SidePlaylistViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidePlaylistViewController.swift; sourceTree = "<group>"; };
 		012F2F402250613F00086870 /* PlayCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayCore.swift; sourceTree = "<group>"; };
 		012F2F422250619A00086870 /* NeteaseMusicAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeteaseMusicAPI.swift; sourceTree = "<group>"; };
+		012F2F482A18D00100086870 /* PlaybackViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackViewModel.swift; sourceTree = "<group>"; };
+		012F2F4A2A18D00D00086870 /* PlaybackCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackCommands.swift; sourceTree = "<group>"; };
 		012F2F452250F8DE00086870 /* LoginViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginViewController.swift; sourceTree = "<group>"; };
 		012FB7D923337FCD007F7247 /* Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
 		012FB7DC233389E1007F7247 /* Preferences.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Preferences.storyboard; sourceTree = "<group>"; };
@@ -327,6 +331,8 @@
 			isa = PBXGroup;
 			children = (
 				012F2F402250613F00086870 /* PlayCore.swift */,
+				012F2F482A18D00100086870 /* PlaybackViewModel.swift */,
+				012F2F4A2A18D00D00086870 /* PlaybackCommands.swift */,
 				0114DB122380E2380034857F /* PlayCoreMediaKeysExtension.swift */,
 				01FF8B7E225D7DFE002D7906 /* CodableObjects.swift */,
 				013143A4226ECD1A00B9E26F /* ExtendedViewState.swift */,
@@ -932,6 +938,8 @@
 				012F115822603CE8002D5599 /* SidePlaylistViewController.swift in Sources */,
 				013143AB226F5F3B00B9E26F /* PlaySongViewBackgroundView.swift in Sources */,
 				012F2F412250613F00086870 /* PlayCore.swift in Sources */,
+				012F2F492A18D00100086870 /* PlaybackViewModel.swift in Sources */,
+				012F2F4B2A18D00D00086870 /* PlaybackCommands.swift in Sources */,
 				014327B022AA079200651064 /* UnresponsiveScrollView.swift in Sources */,
 				012F2F432250619A00086870 /* NeteaseMusicAPI.swift in Sources */,
 				01190495230E653300738904 /* NewPlaylistViewController.swift in Sources */,
@@ -1038,7 +1046,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
+					MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -1094,7 +1102,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.14;
+					MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
@@ -1120,8 +1128,9 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.5;
-				PRODUCT_BUNDLE_IDENTIFIER = com.xjbeta.NeteaseMusic;
+					MARKETING_VERSION = 0.1.5;
+					MACOSX_DEPLOYMENT_TARGET = 15.0;
+					PRODUCT_BUNDLE_IDENTIFIER = com.xjbeta.NeteaseMusic;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "NeteaseMusic/NeteaseMusic-Bridging-Header.h";
@@ -1147,8 +1156,9 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.5;
-				PRODUCT_BUNDLE_IDENTIFIER = com.xjbeta.NeteaseMusic;
+					MARKETING_VERSION = 0.1.5;
+					MACOSX_DEPLOYMENT_TARGET = 15.0;
+					PRODUCT_BUNDLE_IDENTIFIER = com.xjbeta.NeteaseMusic;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "NeteaseMusic/NeteaseMusic-Bridging-Header.h";
@@ -1170,7 +1180,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 11.3;
+					MACOSX_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.xjbeta.NMChannelTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1193,7 +1203,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 11.3;
+					MACOSX_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.xjbeta.NMChannelTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

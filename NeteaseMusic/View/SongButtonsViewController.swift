@@ -9,6 +9,8 @@
 import Cocoa
 
 class SongButtonsViewController: NSViewController {
+    private let playbackCommands = PlaybackCommands.shared
+    private let playbackViewModel = PlaybackViewModel.shared
     @IBOutlet weak var loveButton: NSButton!
     @IBOutlet weak var subscribeButton: NSButton!
     @IBOutlet weak var deleteButton: NSButton!
@@ -16,10 +18,14 @@ class SongButtonsViewController: NSViewController {
     @IBOutlet weak var moreButton: NSButton!
     @IBOutlet var moreMenu: NSMenu!
     
+    private var buttonTintColor: NSColor = .secondaryLabelColor
+    private var destructiveTintColor: NSColor = .tertiaryLabelColor
+    private var lovedTintColor: NSColor = .systemPink
+    
     @IBAction func buttonsAction(_ sender: NSButton) {
         let id = trackId
         guard id > 0 else { return }
-        let seconds = PlayCore.shared.player.currentTime().seconds
+        let seconds = playbackViewModel.playbackElapsedTime
         let time = seconds.isNaN ? 25 : Int(seconds)
         switch sender {
         case loveButton:
@@ -40,10 +46,10 @@ class SongButtonsViewController: NSViewController {
                 
                 let index = track.offset
                 vc.fmPlaylist.remove(at: index)
-                if self.pc.fmMode {
-                    self.pc.start(vc.fmPlaylist,
-                                  id: track.element.id,
-                                  enterFMMode: true)
+                if self.playbackViewModel.fmMode {
+                    self.playbackCommands.start(vc.fmPlaylist,
+                                                id: track.element.id,
+                                                enterFMMode: true)
                 }
             }.ensure(on: .main) {
                 self.deleteButton.isEnabled = true
@@ -69,6 +75,7 @@ class SongButtonsViewController: NSViewController {
     var loved = false {
         didSet {
             initButtonImage(loveButton)
+            updateButtonAppearance()
         }
     }
     
@@ -82,15 +89,34 @@ class SongButtonsViewController: NSViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        initButtonImage(loveButton)
-        initButtonImage(subscribeButton)
-        initButtonImage(deleteButton)
-        initButtonImage(linkButton)
-        initButtonImage(moreButton)
+        configureTahoeAppearance()
+        applySymbolImages()
+        updateButtonAppearance()
     }
     
     func initButtonImage(_ button: NSButton) {
-        
+        if #available(macOS 11.0, *) {
+            let config = NSImage.SymbolConfiguration(pointSize: 13, weight: .semibold)
+            let symbolName: String
+            switch button {
+            case loveButton:
+                symbolName = loved ? "heart.fill" : "heart"
+            case subscribeButton:
+                symbolName = "plus"
+            case deleteButton:
+                symbolName = "trash"
+            case moreButton:
+                symbolName = "ellipsis"
+            case linkButton:
+                symbolName = "link"
+            default:
+                return
+            }
+            button.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil)?.withSymbolConfiguration(config)
+            button.imagePosition = .imageOnly
+            return
+        }
+
         var name = ""
         switch button {
         case loveButton:
@@ -106,10 +132,8 @@ class SongButtonsViewController: NSViewController {
         default:
             return
         }
-        
         name += ".Thin-L"
         button.image = NSImage(named: .init(name))
-
     }
     
     func checkLikeList() {
@@ -124,6 +148,48 @@ class SongButtonsViewController: NSViewController {
         }.catch {
             Log.error("likeList error \($0)")
         }
+    }
+
+    private func configureTahoeAppearance() {
+        [loveButton, subscribeButton, deleteButton, linkButton, moreButton].forEach { button in
+            guard let button else { return }
+            button.isBordered = false
+            button.wantsLayer = true
+            button.layer?.cornerRadius = 8
+            button.layer?.backgroundColor = NSColor.clear.cgColor
+            button.layer?.borderWidth = 0
+            button.layer?.borderColor = NSColor.clear.cgColor
+            button.contentTintColor = buttonTintColor
+            if #available(macOS 10.15, *) {
+                button.layer?.cornerCurve = .continuous
+            }
+        }
+        
+        deleteButton.contentTintColor = destructiveTintColor
+    }
+
+    private func applySymbolImages() {
+        [loveButton, subscribeButton, deleteButton, linkButton, moreButton].forEach(initButtonImage)
+    }
+
+    private func updateButtonAppearance() {
+        [loveButton, subscribeButton, deleteButton, linkButton, moreButton].forEach { button in
+            guard let button else { return }
+            button.layer?.backgroundColor = NSColor.clear.cgColor
+            button.contentTintColor = buttonTintColor
+        }
+        loveButton.contentTintColor = loved ? lovedTintColor : buttonTintColor
+        if loved {
+            loveButton.layer?.backgroundColor = lovedTintColor.withAlphaComponent(0.16).cgColor
+        }
+        deleteButton.contentTintColor = destructiveTintColor
+    }
+    
+    func applyImmersiveAppearance(buttonTintColor: NSColor, destructiveTintColor: NSColor, lovedTintColor: NSColor) {
+        self.buttonTintColor = buttonTintColor
+        self.destructiveTintColor = destructiveTintColor
+        self.lovedTintColor = lovedTintColor
+        updateButtonAppearance()
     }
     
     override func prepare(for segue: NSStoryboardSegue, sender: Any?) {

@@ -21,46 +21,36 @@
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <customView translatesAutoresizingMaskIntoConstraints="NO" id="aPm-xO-W1x">
-                                            <rect key="frame" x="19" y="0.0" width="890" height="647"/>
+                                            <rect key="frame" x="36" y="36" width="856" height="520"/>
                                             <subviews>
                                                 <customView translatesAutoresizingMaskIntoConstraints="NO" id="qM1-UE-mkv">
-                                                    <rect key="frame" x="20" y="114" width="400" height="513"/>
+                                                    <rect key="frame" x="16" y="88" width="300" height="300"/>
                                                     <subviews>
-                                                        <box fixedFrame="YES" boxType="custom" borderType="none" borderWidth="0.0" cornerRadius="168" title="Box" translatesAutoresizingMaskIntoConstraints="NO" id="cCE-ZR-uHF">
-                                                            <rect key="frame" x="17" y="17" width="336" height="336"/>
+                                                        <box fixedFrame="YES" boxType="custom" borderType="none" borderWidth="0.0" cornerRadius="30" title="Box" translatesAutoresizingMaskIntoConstraints="NO" id="cCE-ZR-uHF">
+                                                            <rect key="frame" x="0.0" y="0.0" width="300" height="300"/>
                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                             <view key="contentView" id="6OW-aO-T6v">
-                                                                <rect key="frame" x="0.0" y="0.0" width="336" height="336"/>
+                                                                <rect key="frame" x="0.0" y="0.0" width="300" height="300"/>
                                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                             </view>
                                                             <color key="fillColor" name="quaternaryLabelColor" catalog="System" colorSpace="catalog"/>
                                                         </box>
-                                                        <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vgK-Nx-B37">
-                                                            <rect key="frame" x="30" y="30" width="310" height="310"/>
-                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                            <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="play_disc" id="v6t-PQ-Gn3"/>
-                                                        </imageView>
                                                         <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RTG-ym-GLK">
-                                                            <rect key="frame" x="82" y="82" width="206" height="206"/>
+                                                            <rect key="frame" x="12" y="12" width="276" height="276"/>
                                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                             <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyUpOrDown" id="z1h-x4-9cl"/>
                                                         </imageView>
-                                                        <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="qcM-Dc-htG">
-                                                            <rect key="frame" x="161" y="261" width="139" height="232"/>
-                                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                            <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="play_needle" id="zz5-B2-Xxc"/>
-                                                        </imageView>
                                                     </subviews>
                                                     <constraints>
-                                                        <constraint firstAttribute="height" constant="513" id="a5g-Zj-Bgh"/>
-                                                        <constraint firstAttribute="width" constant="400" id="whF-6c-uf1"/>
+                                                        <constraint firstAttribute="height" constant="300" id="a5g-Zj-Bgh"/>
+                                                        <constraint firstAttribute="width" constant="300" id="whF-6c-uf1"/>
                                                     </constraints>
                                                 </customView>
                                                 <stackView distribution="fill" orientation="vertical" alignment="leading" spacing="25" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5L1-8t-XVF">
-                                                    <rect key="frame" x="430" y="60" width="400" height="500"/>
+                                                    <rect key="frame" x="356" y="54" width="456" height="446"/>
                                                     <subviews>
                                                         <containerView translatesAutoresizingMaskIntoConstraints="NO" id="bfd-ZI-Qt4">
-                                                            <rect key="frame" x="0.0" y="490" width="400" height="10"/>
+                                                            <rect key="frame" x="0.0" y="436" width="456" height="10"/>
                                                             <constraints>
                                                                 <constraint firstAttribute="height" priority="250" constant="10" id="ERT-Ny-qa0"/>
                                                             </constraints>
@@ -69,16 +59,16 @@
                                                             </connections>
                                                         </containerView>
                                                         <containerView translatesAutoresizingMaskIntoConstraints="NO" id="nPL-KW-HBo">
-                                                            <rect key="frame" x="0.0" y="0.0" width="400" height="465"/>
+                                                            <rect key="frame" x="0.0" y="0.0" width="456" height="411"/>
                                                             <connections>
                                                                 <segue destination="8xg-xg-wNy" kind="embed" id="lMO-FK-Z8x"/>
                                                             </connections>
                                                         </containerView>
                                                     </subviews>
                                                     <constraints>
-                                                        <constraint firstAttribute="width" constant="400" id="8My-q1-Cuc"/>
+                                                        <constraint firstAttribute="width" constant="456" id="8My-q1-Cuc"/>
                                                         <constraint firstItem="nPL-KW-HBo" firstAttribute="width" secondItem="5L1-8t-XVF" secondAttribute="width" id="Aae-K7-Xx3"/>
-                                                        <constraint firstAttribute="height" constant="500" id="RHp-Pb-w5E"/>
+                                                        <constraint firstAttribute="height" constant="446" id="RHp-Pb-w5E"/>
                                                         <constraint firstItem="bfd-ZI-Qt4" firstAttribute="width" secondItem="5L1-8t-XVF" secondAttribute="width" id="imt-sd-1Bm"/>
                                                     </constraints>
                                                     <visibilityPriorities>
@@ -91,10 +81,10 @@
                                                     </customSpacing>
                                                 </stackView>
                                                 <stackView distribution="fillEqually" orientation="vertical" alignment="centerX" spacing="6" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="FZz-KW-1vj">
-                                                    <rect key="frame" x="838" y="459" width="50" height="66"/>
+                                                    <rect key="frame" x="818" y="58" width="42" height="58"/>
                                                     <subviews>
                                                         <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ceK-qy-6cy">
-                                                            <rect key="frame" x="7" y="39" width="37" height="32"/>
+                                                            <rect key="frame" x="7" y="36" width="29" height="22"/>
                                                             <buttonCell key="cell" type="push" bezelStyle="rounded" image="icon.sp#icn-lrc_speed" imagePosition="overlaps" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="T7P-I5-HuH">
                                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                                 <font key="font" metaFont="system"/>
@@ -107,7 +97,7 @@
                                                             </connections>
                                                         </button>
                                                         <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="GJO-Kg-53b">
-                                                            <rect key="frame" x="-2" y="26" width="54" height="14"/>
+                                                            <rect key="frame" x="-4" y="19" width="50" height="14"/>
                                                             <constraints>
                                                                 <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="50" id="Zaz-Cd-tTv"/>
                                                             </constraints>
@@ -125,7 +115,7 @@
                                                             </connections>
                                                         </textField>
                                                         <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="40Y-kL-Ck2">
-                                                            <rect key="frame" x="7" y="-7" width="37" height="32"/>
+                                                            <rect key="frame" x="7" y="-1" width="29" height="22"/>
                                                             <buttonCell key="cell" type="push" bezelStyle="rounded" image="icon.sp#icn-lrc_speed_down" imagePosition="overlaps" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="YuZ-BO-giB">
                                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                                 <font key="font" metaFont="system"/>
@@ -151,20 +141,20 @@
                                                 </stackView>
                                             </subviews>
                                             <constraints>
-                                                <constraint firstItem="5L1-8t-XVF" firstAttribute="leading" secondItem="qM1-UE-mkv" secondAttribute="trailing" constant="10" id="A8b-t9-Fy6"/>
-                                                <constraint firstItem="qM1-UE-mkv" firstAttribute="top" secondItem="aPm-xO-W1x" secondAttribute="top" constant="20" id="De8-ry-FvZ"/>
+                                                <constraint firstItem="5L1-8t-XVF" firstAttribute="leading" secondItem="qM1-UE-mkv" secondAttribute="trailing" constant="40" id="A8b-t9-Fy6"/>
+                                                <constraint firstItem="qM1-UE-mkv" firstAttribute="top" secondItem="aPm-xO-W1x" secondAttribute="top" constant="88" id="De8-ry-FvZ"/>
                                                 <constraint firstItem="FZz-KW-1vj" firstAttribute="leading" secondItem="5L1-8t-XVF" secondAttribute="trailing" constant="8" id="EAa-7o-SQj"/>
-                                                <constraint firstAttribute="trailing" secondItem="FZz-KW-1vj" secondAttribute="trailing" constant="2" id="HGy-ya-4qf"/>
-                                                <constraint firstItem="5L1-8t-XVF" firstAttribute="top" secondItem="aPm-xO-W1x" secondAttribute="top" constant="87" id="RQP-Vz-Hj8"/>
-                                                <constraint firstItem="qM1-UE-mkv" firstAttribute="leading" secondItem="aPm-xO-W1x" secondAttribute="leading" constant="20" id="VI5-yx-Za6"/>
-                                                <constraint firstItem="FZz-KW-1vj" firstAttribute="top" secondItem="nPL-KW-HBo" secondAttribute="top" id="s7j-hv-EyK"/>
+                                                <constraint firstAttribute="trailing" secondItem="FZz-KW-1vj" secondAttribute="trailing" constant="-4" id="HGy-ya-4qf"/>
+                                                <constraint firstItem="5L1-8t-XVF" firstAttribute="top" secondItem="aPm-xO-W1x" secondAttribute="top" constant="54" id="RQP-Vz-Hj8"/>
+                                                <constraint firstItem="qM1-UE-mkv" firstAttribute="leading" secondItem="aPm-xO-W1x" secondAttribute="leading" constant="16" id="VI5-yx-Za6"/>
+                                                <constraint firstItem="FZz-KW-1vj" firstAttribute="top" secondItem="aPm-xO-W1x" secondAttribute="top" constant="58" id="s7j-hv-EyK"/>
                                             </constraints>
                                         </customView>
                                         <containerView translatesAutoresizingMaskIntoConstraints="NO" id="Fxq-aK-gfy">
-                                            <rect key="frame" x="44" y="54" width="360" height="45"/>
+                                            <rect key="frame" x="14" y="400" width="304" height="44"/>
                                             <constraints>
-                                                <constraint firstAttribute="width" constant="360" id="Pjm-Fd-bZL"/>
-                                                <constraint firstAttribute="height" constant="45" id="g1I-RS-NgJ"/>
+                                                <constraint firstAttribute="width" constant="304" id="Pjm-Fd-bZL"/>
+                                                <constraint firstAttribute="height" constant="44" id="g1I-RS-NgJ"/>
                                             </constraints>
                                             <connections>
                                                 <segue destination="MCI-Zq-SAr" kind="embed" id="k74-c3-BPz"/>
@@ -174,9 +164,9 @@
                                     <constraints>
                                         <constraint firstAttribute="bottom" secondItem="aPm-xO-W1x" secondAttribute="bottom" id="6RL-bD-aUx"/>
                                         <constraint firstItem="aPm-xO-W1x" firstAttribute="centerX" secondItem="zOg-JT-mFc" secondAttribute="centerX" id="ELo-LL-Dm9"/>
-                                        <constraint firstItem="Fxq-aK-gfy" firstAttribute="top" secondItem="qM1-UE-mkv" secondAttribute="bottom" constant="15" id="Ici-ya-Tze"/>
+                                        <constraint firstItem="Fxq-aK-gfy" firstAttribute="top" secondItem="qM1-UE-mkv" secondAttribute="bottom" constant="12" id="Ici-ya-Tze"/>
                                         <constraint firstItem="Fxq-aK-gfy" firstAttribute="centerX" secondItem="6OW-aO-T6v" secondAttribute="centerX" id="baZ-Gd-IcL"/>
-                                        <constraint firstItem="aPm-xO-W1x" firstAttribute="top" secondItem="zOg-JT-mFc" secondAttribute="top" constant="-67" id="jSb-17-UJ1"/>
+                                        <constraint firstItem="aPm-xO-W1x" firstAttribute="top" secondItem="zOg-JT-mFc" secondAttribute="top" constant="24" id="jSb-17-UJ1"/>
                                     </constraints>
                                 </view>
                                 <color key="fillColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -191,8 +181,6 @@
                     </view>
                     <connections>
                         <outlet property="cdImgImageView" destination="RTG-ym-GLK" id="Vov-TC-qNv"/>
-                        <outlet property="cdRunImageView" destination="qcM-Dc-htG" id="R21-RW-ij2"/>
-                        <outlet property="cdwarpImageView" destination="vgK-Nx-B37" id="6Ca-2x-Oon"/>
                         <outlet property="lyricContainerView" destination="nPL-KW-HBo" id="TYX-NW-Vfa"/>
                         <outlet property="offsetDownButton" destination="40Y-kL-Ck2" id="Nkg-Bj-5ac"/>
                         <outlet property="offsetTextField" destination="GJO-Kg-53b" id="blt-34-Q0b"/>
@@ -231,7 +219,5 @@
     <resources>
         <image name="icon.sp#icn-lrc_speed" width="11" height="10"/>
         <image name="icon.sp#icn-lrc_speed_down" width="11" height="10"/>
-        <image name="play_disc" width="620" height="620"/>
-        <image name="play_needle" width="278" height="464"/>
     </resources>
 </document>

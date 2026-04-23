@@ -10,6 +10,7 @@ import Cocoa
 import PromiseKit
 
 class PlaylistViewController: NSViewController, ContentTabViewController {
+    private let playbackCommands = PlaybackCommands.shared
     
     @IBOutlet weak var playAllButton: NSButton!
     @IBOutlet weak var subscribeButton: SubscribeButton!
@@ -29,7 +30,7 @@ class PlaylistViewController: NSViewController, ContentTabViewController {
     
     @IBAction func playPlaylist(_ sender: NSButton) {
         if sender == playAllButton {
-            PlayCore.shared.start(tracks)
+            playbackCommands.start(tracks)
         }
     }
     
@@ -137,7 +138,7 @@ class PlaylistViewController: NSViewController, ContentTabViewController {
     
     func startPlay(_ all: Bool) {
         let tracks = all ? tracks : selectedItems().items as? [Track] ?? []
-        PlayCore.shared.start(tracks)
+        playbackCommands.start(tracks)
     }
     
     func initPlaylistInfo() {

@@ -9,6 +9,8 @@
 import Cocoa
 
 class SidePlaylistViewController: NSViewController {
+    private let playbackCommands = PlaybackCommands.shared
+    private let playbackViewModel = PlaybackViewModel.shared
     
     @IBOutlet weak var tableView: NSTableView!
     @IBOutlet var playlistArrayController: NSArrayController!
@@ -24,10 +26,10 @@ class SidePlaylistViewController: NSViewController {
         switch segmentedControl.selectedSegment {
         case 0:
             // Playlist
-            PlayCore.shared.playlist.removeAll()
+            playbackCommands.clearPlaylist()
         case 1:
             // History
-            PlayCore.shared.historys.removeAll()
+            playbackCommands.clearHistory()
         default:
             break
         }
@@ -53,6 +55,12 @@ class SidePlaylistViewController: NSViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        tableView.delegate = self
+        tableView.selectionHighlightStyle = .none
+        tableView.rowHeight = 30
+        tableView.intercellSpacing = NSSize(width: 0, height: 4)
+        tableView.usesAlternatingRowBackgroundColors = false
+        tableView.backgroundColor = .clear
         tableView.menu = menuContainer.menu
         menuContainer.menuController?.delegate = self
         initObservers()
@@ -83,24 +91,24 @@ class SidePlaylistViewController: NSViewController {
             break
         }
         
-        currentTrackObserver = PlayCore.shared.observe(\.currentTrack, options: [.new, .initial]) { (pc, _) in
+        currentTrackObserver = playbackViewModel.observe(\.currentTrack, options: [.new, .initial]) { [weak self] viewModel, _ in
             
-            self.playlist.filter {
+            self?.playlist.filter {
                 $0.isCurrentTrack
             }.forEach {
                 $0.isCurrentTrack = false
             }
             
-            guard let c = pc.currentTrack else { return }
-            self.playlist.first {
+            guard let c = viewModel.currentTrack else { return }
+            self?.playlist.first {
                 $0.from == c.from && $0.id == c.id
                 }?.isCurrentTrack = true
         }
         
-        playerStateObserver =  PlayCore.shared.observe(\.playerState, options: [.new, .initial]) { (pc, _) in
-            self.playlist.first {
+        playerStateObserver =  playbackViewModel.observe(\.playerState, options: [.new, .initial]) { [weak self] viewModel, _ in
+            self?.playlist.first {
                 $0.isCurrentTrack
-                }?.isPlaying = pc.isCurrentTrackPlaying
+                }?.isPlaying = viewModel.isCurrentTrackPlaying
         }
     }
     
@@ -131,9 +139,7 @@ extension SidePlaylistViewController: TAAPMenuDelegate {
     }
     
     func removeSuccess(ids: [Int], newItem: Any?) {
-        PlayCore.shared.playlist = PlayCore.shared.playlist.filter {
-            !ids.contains($0.id)
-        }
+        playbackCommands.removePlaylistTracks(ids: ids)
     }
     
     func shouldReloadData() {
@@ -149,6 +155,12 @@ extension SidePlaylistViewController: TAAPMenuDelegate {
             return
         }
         
-        PlayCore.shared.start(tracks)
+        playbackCommands.start(tracks)
+    }
+}
+
+extension SidePlaylistViewController: NSTableViewDelegate {
+    func tableView(_ tableView: NSTableView, rowViewForRow row: Int) -> NSTableRowView? {
+        TahoeTableRowView()
     }
 }

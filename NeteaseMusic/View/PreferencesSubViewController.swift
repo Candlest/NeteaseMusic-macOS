@@ -11,6 +11,7 @@ import HotKey
 import WebKit
 
 class PreferencesSubViewController: NSViewController {
+    private let playbackCommands = PlaybackCommands.shared
     
     @IBOutlet var userImageView: NSImageView!
     @IBOutlet var userNameTextField: NSTextField!
@@ -78,7 +79,7 @@ class PreferencesSubViewController: NSViewController {
             vcManager.updateGlobalHotKeysState()
         case enableSystemMediaButton:
             pref.useSystemMediaControl = sender.state == .on
-            PlayCore.shared.setupSystemMediaKeys()
+            playbackCommands.setupSystemMediaKeys()
         default:
             break
         }

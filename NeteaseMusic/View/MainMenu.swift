@@ -16,7 +16,7 @@ class MainMenu: NSObject, NSMenuItemValidation {
     @IBOutlet weak var decreaseVolumeMenuItem: NSMenuItem!
     @IBOutlet weak var likeMenuItem: NSMenuItem!
     
-    let playCore = PlayCore.shared
+    private let playbackCommands = PlaybackCommands.shared
     
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         return true
@@ -34,22 +34,22 @@ class MainMenu: NSObject, NSMenuItemValidation {
     
     @IBAction func next(_ sender: Any) {
         print(#function)
-        playCore.nextSong()
+        playbackCommands.nextSong()
     }
     
     @IBAction func previous(_ sender: Any) {
         print(#function)
-        playCore.previousSong()
+        playbackCommands.previousSong()
     }
     
     @IBAction func increaseVolume(_ sender: Any) {
         print(#function)
-        playCore.increaseVolume()
+        playbackCommands.increaseVolume()
     }
     
     @IBAction func decreaseVolume(_ sender: Any) {
         print(#function)
-        playCore.decreaseVolume()
+        playbackCommands.decreaseVolume()
     }
     
     @IBAction func like(_ sender: Any) {

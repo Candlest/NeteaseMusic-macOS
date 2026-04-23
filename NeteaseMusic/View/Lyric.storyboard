@@ -51,14 +51,14 @@
                                                     </textFieldCell>
                                                     <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                                     <prototypeCellViews>
-                                                        <tableCellView id="2pD-0m-2Z6">
+                                                        <tableCellView identifier="LyricCellView" id="2pD-0m-2Z6">
                                                             <rect key="frame" x="11" y="4" width="397" height="41"/>
                                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                             <subviews>
                                                                 <stackView distribution="fill" orientation="vertical" alignment="leading" spacing="2" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5ek-Il-R21">
                                                                     <rect key="frame" x="4" y="4" width="389" height="33"/>
                                                                     <subviews>
-                                                                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="PkD-ck-eOo">
+                                                                        <textField identifier="PrimaryLyricField" focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="PkD-ck-eOo">
                                                                             <rect key="frame" x="-2" y="17" width="36" height="16"/>
                                                                             <textFieldCell key="cell" selectable="YES" title="lyric1" id="pfp-47-dy2">
                                                                                 <font key="font" metaFont="system"/>
@@ -71,7 +71,7 @@
                                                                                 <binding destination="2pD-0m-2Z6" name="value" keyPath="objectValue.firstString" id="Glt-tp-njC"/>
                                                                             </connections>
                                                                         </textField>
-                                                                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="yvc-Zl-ZlL">
+                                                                        <textField identifier="SecondaryLyricField" focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="yvc-Zl-ZlL">
                                                                             <rect key="frame" x="-2" y="0.0" width="36" height="15"/>
                                                                             <textFieldCell key="cell" selectable="YES" title="lyric2" id="NyF-1x-DN3">
                                                                                 <font key="font" metaFont="cellTitle"/>

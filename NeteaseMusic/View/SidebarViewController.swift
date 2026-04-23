@@ -88,6 +88,28 @@ class SidebarViewController: NSViewController {
 
         @objc dynamic var icon: NSImage? {
             get {
+                if #available(macOS 11.0, *) {
+                    let symbolName: String?
+                    switch type {
+                    case .discover:
+                        symbolName = "safari"
+                    case .fm:
+                        symbolName = "dot.radiowaves.left.and.right"
+                    case .favourite:
+                        symbolName = "heart"
+                    case .createdPlaylist, .subscribedPlaylist:
+                        symbolName = "music.note.list"
+                    case .mySubscription:
+                        symbolName = "star"
+                    default:
+                        symbolName = nil
+                    }
+                    if let symbolName {
+                        let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .medium)
+                        return NSImage(systemSymbolName: symbolName, accessibilityDescription: nil)?.withSymbolConfiguration(config)
+                    }
+                }
+
                 var i: NSImage?
                 switch type {
                 case .discover:
@@ -103,8 +125,7 @@ class SidebarViewController: NSViewController {
                 default:
                     break
                 }
-                
-                return i?.tint(color: .nColor)
+                return i?.tint(color: .secondaryLabelColor)
             }
         }
         var id: Int = 0
@@ -222,6 +243,9 @@ class SidebarViewController: NSViewController {
         }
         
         outlineView.menu = menuContainer.menu
+        outlineView.rowHeight = 28
+        outlineView.intercellSpacing = NSSize(width: 0, height: 6)
+        outlineView.indentationPerLevel = 10
         menuContainer.menuController?.delegate = self
         
         sidebarItems = defaultItems
@@ -407,8 +431,17 @@ extension SidebarViewController: NSOutlineViewDelegate, NSOutlineViewDataSource 
                 owner: self) as? NSTableCellView else {
             return nil
         }
+
+        configureSidebarCell(view, for: node)
         
         return view
+    }
+
+    func outlineView(_ outlineView: NSOutlineView, rowViewForItem item: Any) -> NSTableRowView? {
+        guard let node = (item as? NSTreeNode)?.representedObject as? SidebarItem else {
+            return nil
+        }
+        return TahoeSidebarRowView(isGroupRow: !searchMode && !node.isLeaf)
     }
     
     
@@ -432,11 +465,11 @@ extension SidebarViewController: NSOutlineViewDelegate, NSOutlineViewDataSource 
         }
         
         if searchMode {
-            return 15
+            return node.type == .searchSuggestionCellSong ? 30 : 22
         } else if node.isLeaf {
-            return 21
+            return 28
         } else {
-            return 17
+            return 24
         }
     }
     
@@ -525,6 +558,92 @@ extension SidebarViewController: NSOutlineViewDelegate, NSOutlineViewDataSource 
         } else {
             
             ViewControllerManager.shared.selectedSidebarItem = item
+        }
+    }
+}
+
+private extension SidebarViewController {
+    func configureSidebarCell(_ cell: NSTableCellView, for item: SidebarItem) {
+        if let imageView = cell.imageView {
+            imageView.contentTintColor = item.isLeaf ? .secondaryLabelColor : .tertiaryLabelColor
+        }
+
+        switch cell.identifier?.rawValue {
+        case "SidebarHeaderCell", "SidebarSearchHeaderCell":
+            cell.textField?.font = .systemFont(ofSize: 11, weight: .semibold)
+            cell.textField?.textColor = .tertiaryLabelColor
+        case "SidebarSearchDataCell":
+            cell.textField?.font = .systemFont(ofSize: 12, weight: .medium)
+            cell.textField?.textColor = .labelColor
+            if let secondaryLabel = cell.subviews.compactMap({ $0 as? NSTextField }).dropFirst().first {
+                secondaryLabel.font = .systemFont(ofSize: 11, weight: .regular)
+                secondaryLabel.textColor = .tertiaryLabelColor
+            }
+        default:
+            cell.textField?.font = .systemFont(ofSize: 13, weight: .medium)
+            cell.textField?.textColor = .labelColor
+        }
+    }
+}
+
+final class TahoeSidebarRowView: NSTableRowView {
+    private let isGroupRow: Bool
+    private var hover = false {
+        didSet { needsDisplay = true }
+    }
+    private var trackingAreaRef: NSTrackingArea?
+
+    init(isGroupRow: Bool) {
+        self.isGroupRow = isGroupRow
+        super.init(frame: .zero)
+        selectionHighlightStyle = .none
+        wantsLayer = true
+    }
+
+    required init?(coder: NSCoder) {
+        self.isGroupRow = false
+        super.init(coder: coder)
+        selectionHighlightStyle = .none
+        wantsLayer = true
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let trackingAreaRef {
+            removeTrackingArea(trackingAreaRef)
+        }
+        let area = NSTrackingArea(rect: bounds,
+                                  options: [.mouseEnteredAndExited, .activeInActiveApp, .inVisibleRect],
+                                  owner: self,
+                                  userInfo: nil)
+        addTrackingArea(area)
+        trackingAreaRef = area
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        hover = true
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        hover = false
+    }
+
+    override func drawSelection(in dirtyRect: NSRect) {
+    }
+
+    override func drawBackground(in dirtyRect: NSRect) {
+        super.drawBackground(in: dirtyRect)
+        guard !isGroupRow else { return }
+
+        let drawRect = bounds.insetBy(dx: 8, dy: 1)
+        let path = NSBezierPath(roundedRect: drawRect, xRadius: 9, yRadius: 9)
+
+        if isSelected {
+            NSColor.selectedContentBackgroundColor.withAlphaComponent(0.55).setFill()
+            path.fill()
+        } else if hover {
+            NSColor.labelColor.withAlphaComponent(0.05).setFill()
+            path.fill()
         }
     }
 }

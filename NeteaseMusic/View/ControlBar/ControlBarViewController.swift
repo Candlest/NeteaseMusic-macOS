@@ -10,6 +10,8 @@ import Cocoa
 import AVFoundation
 
 class ControlBarViewController: NSViewController {
+    private let playbackCommands = PlaybackCommands.shared
+    private let playbackViewModel = PlaybackViewModel.shared
     
     @IBOutlet weak var trackPicButton: NSButton!
     @IBOutlet weak var trackNameTextField: NSTextField!
@@ -27,18 +29,17 @@ class ControlBarViewController: NSViewController {
         let pc = PlayCore.shared
         let player = pc.player
         let preferences = Preferences.shared
-        let vcm = ViewControllerManager.shared
         
         switch sender {
         case previousButton:
-            pc.previousSong()
+            playbackCommands.previousSong()
         case pauseButton:
-            vcm.togglePlayPause()
+            playbackCommands.togglePlayPause()
         case nextButton:
-            pc.nextSong()
-            if pc.fmMode,
-               let id = pc.currentTrack?.id {
-                let seconds = Int(player.currentTime().seconds)
+            playbackCommands.nextSong()
+            if playbackViewModel.fmMode,
+               let id = playbackViewModel.currentTrack?.id {
+                let seconds = Int(playbackViewModel.playbackElapsedTime)
                 pc.api.radioSkip(id, seconds).done {
                     Log.info("Song skipped, id: \(id) seconds: \(seconds)")
                 }.catch {
@@ -47,8 +48,7 @@ class ControlBarViewController: NSViewController {
             }
         case muteButton:
             let mute = !player.isMuted
-            player.isMuted = mute
-            preferences.mute = mute
+            playbackCommands.setMuted(mute)
             initVolumeButton()
         case repeatModeButton:
             switch preferences.repeatMode {
@@ -85,15 +85,14 @@ class ControlBarViewController: NSViewController {
         switch sender {
         case durationSlider:
             let time = CMTime(seconds: sender.doubleValue, preferredTimescale: 1000)
-            PlayCore.shared.seekToPlaybackTime(time)
+            playbackCommands.seek(to: time)
             if let eventType = NSApp.currentEvent?.type,
                 eventType == .leftMouseUp {
                 durationSlider.ignoreValueUpdate = false
             }
         case volumeSlider:
             let v = volumeSlider.floatValue
-            PlayCore.shared.player.volume = v
-            Preferences.shared.volume = v
+            playbackCommands.setVolume(v)
             initVolumeButton()
         default:
             break
@@ -109,11 +108,8 @@ class ControlBarViewController: NSViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        previousButton.contentTintColor = .nColor
-        nextButton.contentTintColor = .nColor
-        
-        playlistButton.image = NSImage(named: .init("music.note.list.Regular-M"))
-        playlistButton.contentTintColor = .nColor
+        configureTahoeAppearance()
+        applySymbolImages()
         
         let pc = PlayCore.shared
         initVolumeButton()
@@ -128,11 +124,12 @@ class ControlBarViewController: NSViewController {
         
         initPlayModeButton()
         
-        playProgressObserver = pc.observe(\.playProgress, options: [.initial, .new]) { [weak self] pc, _ in
+        playProgressObserver = playbackViewModel.observe(\.playProgress, options: [.initial, .new]) { [weak self] viewModel, _ in
             guard let slider = self?.durationSlider,
                   let textFiled = self?.durationTextField else { return }
             let player = pc.player
-            guard player.currentItem != nil else {
+            guard player.currentItem != nil,
+                  viewModel.currentTrack != nil else {
                 slider.maxValue = 1
                 slider.doubleValue = 0
                 slider.cachedDoubleValue = 0
@@ -140,8 +137,8 @@ class ControlBarViewController: NSViewController {
                 return
             }
             
-            let cd = pc.playbackElapsedTime
-            let td = pc.playbackDuration
+            let cd = viewModel.playbackElapsedTime
+            let td = viewModel.playbackDuration
             
             if td != slider.maxValue {
                 slider.maxValue = td
@@ -152,21 +149,25 @@ class ControlBarViewController: NSViewController {
             textFiled.stringValue = "\(cd.durationFormatter()) / \(td.durationFormatter())"
         }
         
-        pauseStautsObserver = pc.observe(\.playerState, options: [.initial, .new]) { [weak self] pc, _ in
+        pauseStautsObserver = playbackViewModel.observe(\.playerState, options: [.initial, .new]) { [weak self] viewModel, _ in
             guard let btn = self?.pauseButton else { return }
-            
-            let name = pc.playerState == .playing ? "pause.circle.Light-L" : "play.circle.Light-L"
-
-            btn.image = NSImage(named: .init(name))
-            btn.contentTintColor = .nColor
+            if #available(macOS 11.0, *) {
+                let config = NSImage.SymbolConfiguration(pointSize: 16, weight: .semibold)
+                let symbol = viewModel.playerState == .playing ? "pause.fill" : "play.fill"
+                btn.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?.withSymbolConfiguration(config)
+            } else {
+                let name = viewModel.playerState == .playing ? "pause.circle.Light-L" : "play.circle.Light-L"
+                btn.image = NSImage(named: .init(name))
+            }
+            btn.contentTintColor = .labelColor
         }
         
-        previousButtonObserver = pc.observe(\.pnItemType, options: [.initial, .new]) { [weak self] pc, _ in
+        previousButtonObserver = playbackViewModel.observe(\.pnItemType, options: [.initial, .new]) { [weak self] viewModel, _ in
             
             self?.previousButton.isEnabled = true
             self?.nextButton.isEnabled = true
             
-            switch pc.pnItemType {
+            switch viewModel.pnItemType {
             case .withoutNext:
                 self?.nextButton.isEnabled = false
             case .withoutPrevious:
@@ -180,12 +181,12 @@ class ControlBarViewController: NSViewController {
             
         }
         
-        currentTrackObserver = pc.observe(\.currentTrack, options: [.initial, .new]) { [weak self] pc, _ in
-            self?.initViews(pc.currentTrack)
+        currentTrackObserver = playbackViewModel.observe(\.currentTrack, options: [.initial, .new]) { [weak self] viewModel, _ in
+            self?.initViews(viewModel.currentTrack)
         }
         
-        fmModeObserver = pc.observe(\.fmMode, options: [.initial, .new]) { [weak self] (playCore, changes) in
-            let fmMode = playCore.fmMode
+        fmModeObserver = playbackViewModel.observe(\.fmMode, options: [.initial, .new]) { [weak self] viewModel, _ in
+            let fmMode = viewModel.fmMode
             self?.previousButton.isHidden = fmMode
             self?.repeatModeButton.isHidden = fmMode
             self?.shuffleModeButton.isHidden = fmMode
@@ -205,10 +206,10 @@ class ControlBarViewController: NSViewController {
         if let t = track {
             trackPicButton.setImage(t.album.picUrl?.absoluteString, true)
             trackNameTextField.stringValue = t.name
-            let name = t.secondName
-            trackSecondNameTextField.isHidden = name == ""
-            trackSecondNameTextField.stringValue = name
-            artistButtonsViewController()?.initButtons(t, small: true)
+            let subtitle = controlBarSubtitle(for: t)
+            trackSecondNameTextField.isHidden = subtitle.isEmpty
+            trackSecondNameTextField.stringValue = subtitle
+            artistButtonsViewController()?.removeAllButtons()
             durationTextField.isHidden = false
         } else {
             trackPicButton.image = nil
@@ -226,6 +227,226 @@ class ControlBarViewController: NSViewController {
         durationSlider.mouseResponse = !durationTextField.isHidden
     }
 
+    private func controlBarSubtitle(for track: Track) -> String {
+        let artists = track.artists.map(\.name).joined(separator: " / ")
+        return artists.isEmpty ? track.secondName : artists
+    }
+
+    private func configureTahoeAppearance() {
+        view.wantsLayer = true
+        view.layer?.backgroundColor = NSColor.clear.cgColor
+        if let box = view.subviews.compactMap({ $0 as? NSBox }).first {
+            box.isTransparent = true
+            box.borderType = .noBorder
+            box.boxType = .custom
+            box.fillColor = .clear
+        }
+        
+        if view.subviews.first(where: { $0.identifier?.rawValue == "TahoeControlBarBackground" }) == nil {
+            let effectView = NSVisualEffectView(frame: view.bounds)
+            effectView.identifier = NSUserInterfaceItemIdentifier("TahoeControlBarBackground")
+            effectView.autoresizingMask = [.width, .height]
+            effectView.material = .hudWindow
+            effectView.blendingMode = .withinWindow
+            effectView.state = .active
+            effectView.wantsLayer = true
+            effectView.layer?.cornerRadius = 18
+            effectView.layer?.borderWidth = 1
+            effectView.layer?.borderColor = NSColor.white.withAlphaComponent(0.12).cgColor
+            effectView.layer?.shadowColor = NSColor.black.withAlphaComponent(0.2).cgColor
+            effectView.layer?.shadowOpacity = 1
+            effectView.layer?.shadowRadius = 18
+            effectView.layer?.shadowOffset = CGSize(width: 0, height: -2)
+            if #available(macOS 10.15, *) {
+                effectView.layer?.cornerCurve = .continuous
+            }
+            view.addSubview(effectView, positioned: .below, relativeTo: view.subviews.first)
+        }
+        
+        durationSlider.controlSize = .small
+        volumeSlider.controlSize = .small
+
+        durationTextField.font = .monospacedDigitSystemFont(ofSize: 10, weight: .medium)
+        durationTextField.textColor = .tertiaryLabelColor
+        durationTextField.alignment = .right
+        trackNameTextField.font = .systemFont(ofSize: 13, weight: .semibold)
+        trackNameTextField.textColor = .labelColor
+        trackNameTextField.lineBreakMode = .byTruncatingTail
+        trackSecondNameTextField.font = .systemFont(ofSize: 11, weight: .regular)
+        trackSecondNameTextField.textColor = .secondaryLabelColor
+        trackSecondNameTextField.lineBreakMode = .byTruncatingTail
+        
+        configureControlButton(previousButton, prominent: false)
+        configureControlButton(nextButton, prominent: false)
+        configureControlButton(pauseButton, prominent: true)
+        configureControlButton(muteButton, prominent: false)
+        configureControlButton(repeatModeButton, prominent: false)
+        configureControlButton(shuffleModeButton, prominent: false)
+        configureControlButton(playlistButton, prominent: false)
+        configureTrailingControls()
+        configureLeadingInformationRegion()
+        rebalanceHorizontalLayout()
+        
+        trackPicButton.wantsLayer = true
+        trackPicButton.layer?.cornerRadius = 9
+        trackPicButton.layer?.masksToBounds = true
+        trackPicButton.layer?.borderWidth = 1
+        trackPicButton.layer?.borderColor = NSColor.white.withAlphaComponent(0.08).cgColor
+        trackPicButton.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.04).cgColor
+        trackPicButton.layer?.shadowColor = NSColor.black.withAlphaComponent(0.18).cgColor
+        trackPicButton.layer?.shadowOpacity = 1
+        trackPicButton.layer?.shadowRadius = 10
+        trackPicButton.layer?.shadowOffset = CGSize(width: 0, height: -2)
+    }
+
+    private func applySymbolImages() {
+        if #available(macOS 11.0, *) {
+            let compact = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+            let prominent = NSImage.SymbolConfiguration(pointSize: 16, weight: .semibold)
+            previousButton.image = NSImage(systemSymbolName: "backward.fill", accessibilityDescription: nil)?.withSymbolConfiguration(compact)
+            nextButton.image = NSImage(systemSymbolName: "forward.fill", accessibilityDescription: nil)?.withSymbolConfiguration(compact)
+            pauseButton.image = NSImage(systemSymbolName: "play.fill", accessibilityDescription: nil)?.withSymbolConfiguration(prominent)
+            playlistButton.image = NSImage(systemSymbolName: "list.bullet", accessibilityDescription: nil)?.withSymbolConfiguration(compact)
+            repeatModeButton.image = NSImage(systemSymbolName: "repeat", accessibilityDescription: nil)?.withSymbolConfiguration(compact)
+            shuffleModeButton.image = NSImage(systemSymbolName: "shuffle", accessibilityDescription: nil)?.withSymbolConfiguration(compact)
+        } else {
+            playlistButton.image = NSImage(named: .init("music.note.list.Regular-M"))
+        }
+    }
+    
+    private func configureControlButton(_ button: NSButton, prominent: Bool) {
+        button.isBordered = false
+        button.wantsLayer = true
+        button.layer?.cornerRadius = prominent ? 17 : 9
+        if #available(macOS 10.15, *) {
+            button.layer?.cornerCurve = .continuous
+        }
+        button.layer?.borderWidth = 1
+        button.layer?.borderColor = prominent ? NSColor.white.withAlphaComponent(0.14).cgColor : NSColor.white.withAlphaComponent(0.06).cgColor
+        button.layer?.backgroundColor = prominent
+            ? NSColor.white.withAlphaComponent(0.1).cgColor
+            : NSColor.white.withAlphaComponent(0.035).cgColor
+        button.contentTintColor = prominent ? .labelColor : .secondaryLabelColor
+    }
+
+    private func configureTrailingControls() {
+        firstAncestorStackView(of: playlistButton)?.alignment = .centerY
+        [muteButton, repeatModeButton, shuffleModeButton, playlistButton].forEach {
+            setSquareSize(26, for: $0)
+        }
+        setWidth(78, for: volumeSlider)
+        setStackSpacing(8, for: volumeSlider)
+        setStackSpacing(10, for: muteButton)
+        setStackSpacing(14, for: playlistButton)
+    }
+
+    private func configureLeadingInformationRegion() {
+        setSquareSize(34, for: trackPicButton)
+        if let stack = firstAncestorStackView(of: trackNameTextField) {
+            stack.spacing = 1
+            stack.setHuggingPriority(.defaultLow, for: .horizontal)
+            if stack.constraints.first(where: { $0.identifier == "ControlBarInfoMaxWidth" }) == nil {
+                let width = stack.widthAnchor.constraint(lessThanOrEqualToConstant: 188)
+                width.identifier = "ControlBarInfoMaxWidth"
+                width.isActive = true
+            }
+        }
+        if let artistContainer = artistButtonsViewController()?.view.superview {
+            artistContainer.isHidden = true
+            for constraint in artistContainer.constraints where constraint.firstAttribute == .width {
+                constraint.constant = 0
+            }
+        }
+        adjustSiblingSpacing(between: trackPicButton, and: trackNameTextField, to: 6)
+    }
+
+    private func rebalanceHorizontalLayout() {
+        if let volumeStack = firstAncestorStackView(of: muteButton),
+           let playModeStack = firstAncestorStackView(of: playlistButton),
+           let contentView = volumeStack.superview {
+            for constraint in contentView.constraints {
+                if matches(constraint, first: playModeStack, firstAttribute: .trailing, second: contentView, secondAttribute: .trailing) {
+                    constraint.constant = 18
+                } else if matches(constraint, first: playModeStack, firstAttribute: .leading, second: volumeStack, secondAttribute: .trailing) {
+                    constraint.constant = 14
+                }
+            }
+        }
+    }
+
+    private func setSquareSize(_ size: CGFloat, for button: NSButton) {
+        var hasWidthConstraint = false
+        var hasHeightConstraint = false
+        for constraint in button.constraints {
+            switch constraint.firstAttribute {
+            case .width:
+                constraint.constant = size
+                hasWidthConstraint = true
+            case .height:
+                constraint.constant = size
+                hasHeightConstraint = true
+            default:
+                break
+            }
+        }
+        if !hasWidthConstraint {
+            button.widthAnchor.constraint(equalToConstant: size).isActive = true
+        }
+        if !hasHeightConstraint {
+            button.heightAnchor.constraint(equalToConstant: size).isActive = true
+        }
+    }
+
+    private func setWidth(_ width: CGFloat, for slider: NSSlider) {
+        for constraint in slider.constraints where constraint.firstAttribute == .width {
+            constraint.constant = width
+        }
+    }
+
+    private func setStackSpacing(_ spacing: CGFloat, for view: NSView) {
+        var current: NSView? = view
+        while let candidate = current?.superview {
+            if let stackView = candidate as? NSStackView {
+                stackView.spacing = spacing
+                return
+            }
+            current = candidate
+        }
+    }
+
+    private func firstAncestorStackView(of view: NSView) -> NSStackView? {
+        var current: NSView? = view
+        while let candidate = current?.superview {
+            if let stackView = candidate as? NSStackView {
+                return stackView
+            }
+            current = candidate
+        }
+        return nil
+    }
+
+    private func adjustSiblingSpacing(between leftView: NSView, and rightView: NSView, to constant: CGFloat) {
+        guard let container = leftView.superview else { return }
+        for constraint in container.constraints where matches(constraint, first: rightView, firstAttribute: .leading, second: leftView, secondAttribute: .trailing) {
+            constraint.constant = constant
+        }
+    }
+
+    private func matches(_ constraint: NSLayoutConstraint,
+                         first: AnyObject,
+                         firstAttribute: NSLayoutConstraint.Attribute,
+                         second: AnyObject,
+                         secondAttribute: NSLayoutConstraint.Attribute) -> Bool {
+        (constraint.firstItem === first &&
+         constraint.firstAttribute == firstAttribute &&
+         constraint.secondItem === second &&
+         constraint.secondAttribute == secondAttribute) ||
+        (constraint.firstItem === second &&
+         constraint.firstAttribute == secondAttribute &&
+         constraint.secondItem === first &&
+         constraint.secondAttribute == firstAttribute)
+    }
+
     
     func initVolumeButton() {
         let pc = PlayCore.shared
@@ -239,7 +460,7 @@ class ControlBarViewController: NSViewController {
         pc.player.isMuted = mute
         
         var imageName = ""
-        var color = NSColor.nColor
+        var color = NSColor.secondaryLabelColor
         if mute {
             imageName = "speaker.slash"
             color = .systemGray
@@ -258,26 +479,43 @@ class ControlBarViewController: NSViewController {
                 imageName = "speaker"
             }
         }
-        imageName += ".Regular-M"
-        muteButton.image = NSImage(named: .init(imageName))
+        if #available(macOS 11.0, *) {
+            let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+            let symbolMap = [
+                "speaker.slash": "speaker.slash.fill",
+                "speaker": "speaker.slash",
+                "speaker.wave.1": "speaker.wave.1.fill",
+                "speaker.wave.2": "speaker.wave.2.fill",
+                "speaker.wave.3": "speaker.wave.3.fill"
+            ]
+            muteButton.image = NSImage(systemSymbolName: symbolMap[imageName] ?? "speaker.wave.2.fill", accessibilityDescription: nil)?.withSymbolConfiguration(config)
+        } else {
+            imageName += ".Regular-M"
+            muteButton.image = NSImage(named: .init(imageName))
+        }
         muteButton.contentTintColor = color
     }
     
     func initPlayModeButton() {
         let pref = Preferences.shared
         
-        var repeatImgName = pref.repeatMode == .repeatItem ? "repeat.1" : "repeat"
-        repeatImgName += ".Regular-M"
+        if #available(macOS 11.0, *) {
+            let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+            let repeatSymbol = pref.repeatMode == .repeatItem ? "repeat.1" : "repeat"
+            repeatModeButton.image = NSImage(systemSymbolName: repeatSymbol, accessibilityDescription: nil)?.withSymbolConfiguration(config)
+            shuffleModeButton.image = NSImage(systemSymbolName: "shuffle", accessibilityDescription: nil)?.withSymbolConfiguration(config)
+            playlistButton.image = NSImage(systemSymbolName: "list.bullet", accessibilityDescription: nil)?.withSymbolConfiguration(config)
+        } else {
+            var repeatImgName = pref.repeatMode == .repeatItem ? "repeat.1" : "repeat"
+            repeatImgName += ".Regular-M"
+            var shuffleImgName = "shuffle"
+            shuffleImgName += ".Regular-M"
+            repeatModeButton.image = NSImage(named: .init(repeatImgName))
+            shuffleModeButton.image = NSImage(named: .init(shuffleImgName))
+        }
         
-        var shuffleImgName = "shuffle"
-        shuffleImgName += ".Regular-M"
-        
-        repeatModeButton.image = NSImage(named: .init(repeatImgName))
-        
-        repeatModeButton.contentTintColor = pref.repeatMode == .noRepeat ? .systemGray : .nColor
-        
-        shuffleModeButton.image = NSImage(named: .init(shuffleImgName))
-        shuffleModeButton.contentTintColor = pref.shuffleMode == .noShuffle ? .systemGray : .nColor
+        repeatModeButton.contentTintColor = pref.repeatMode == .noRepeat ? .systemGray : .labelColor
+        shuffleModeButton.contentTintColor = pref.shuffleMode == .noShuffle ? .systemGray : .labelColor
         
         PlayCore.shared.updateRepeatShuffleMode()
     }

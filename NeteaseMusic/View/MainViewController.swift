@@ -10,6 +10,8 @@ import Cocoa
 import PromiseKit
 
 class MainViewController: NSViewController {
+    private let playbackViewModel = PlaybackViewModel.shared
+    private let navigationAnimationDuration: TimeInterval = 0.34
     @IBOutlet weak var mainTabView: NSTabView!
     @IBOutlet weak var contentTabView: NSTabView!
     @IBOutlet weak var playingSongTabView: NSTabView!
@@ -28,6 +30,8 @@ class MainViewController: NSViewController {
     @IBOutlet weak var messageBox: NSBox!
     @IBOutlet weak var messageTextField: NSTextField!
     private var messageID = ""
+    private var lastContentTabItem: ContentTabItems?
+    private var lastPlayingSongTabItem: playingSongTabItems = .main
     
     var sidebarItemObserver: NSKeyValueObservation?
     var playlistNotification: NSObjectProtocol?
@@ -84,13 +88,11 @@ class MainViewController: NSViewController {
         }
         
         playingSongNotification = NotificationCenter.default.addObserver(forName: .showPlayingSong, object: nil, queue: .main) { [weak self] _ in
-            let pc = PlayCore.shared
-            
-            if pc.fmMode,
-               let _ = pc.currentTrack {
+            if self?.playbackViewModel.fmMode == true,
+               self?.playbackViewModel.currentTrack != nil {
                 ViewControllerManager.shared.selectSidebarItem(.fm)
-            } else if !pc.fmMode,
-                      let _ = pc.currentTrack,
+            } else if self?.playbackViewModel.fmMode == false,
+                      self?.playbackViewModel.currentTrack != nil,
                       let playingSongViewStatus = self?.playingSongViewStatus {
                 
                 let newItem: playingSongTabItems = playingSongViewStatus == .hidden ? .playingSong : .main
@@ -158,23 +160,24 @@ class MainViewController: NSViewController {
         
         
         guard let vc = contentTabVC(ctItem) else {
-            contentTabView.selectTabViewItem(at: ctItem.rawValue)
+            transitionContentTab(to: ctItem, style: .content)
             return
         }
         
         
         loadingTabView.selectTabViewItem(at: loadingTabItems.loading.rawValue)
         loadingProgressIndicator.startAnimation(nil)
-        contentTabView.selectTabViewItem(at: ContentTabItems.loading.rawValue)
+        transitionContentTab(to: .loading, style: .loading)
         
         vc.initContent().ensure {
             self.loadingProgressIndicator.stopAnimation(nil)
         }.done(on:.main) {
-            self.contentTabView.selectTabViewItem(at: ctItem.rawValue)
+            self.transitionContentTab(to: ctItem, style: .content)
             Log.info("\(ctItem) \(item.id) Content inited.")
         }.catch {
             Log.error("\(ctItem) \(item.id) Content init failed.  \($0)")
             self.loadingTabView.selectTabViewItem(at: loadingTabItems.tryAgain.rawValue)
+            self.transitionContentTab(to: .loading, style: .retry)
         }
     }
     
@@ -216,7 +219,136 @@ class MainViewController: NSViewController {
     }
     
     func updatePlayingSongTabView(_ item: playingSongTabItems) {
-        playingSongTabView.selectTabViewItem(at: item.rawValue)
+        transitionTabView(playingSongTabView,
+                          to: item.rawValue,
+                          previousRawValue: lastPlayingSongTabItem.rawValue,
+                          style: item == .playingSong ? .immersive : .content)
+        lastPlayingSongTabItem = item
+    }
+    
+    private enum TabTransitionStyle {
+        case loading
+        case content
+        case retry
+        case immersive
+    }
+    
+    private func transitionContentTab(to item: ContentTabItems, style: TabTransitionStyle) {
+        transitionTabView(contentTabView,
+                          to: item.rawValue,
+                          previousRawValue: lastContentTabItem?.rawValue,
+                          style: style)
+        lastContentTabItem = item
+    }
+    
+    private func transitionTabView(_ tabView: NSTabView,
+                                   to index: Int,
+                                   previousRawValue: Int?,
+                                   style: TabTransitionStyle) {
+        guard tabView.numberOfTabViewItems > index,
+              index >= 0 else {
+            return
+        }
+        
+        let selectedIndex = previousRawValue ?? tabView.indexOfTabViewItem(tabView.selectedTabViewItem ?? NSTabViewItem())
+        let shouldAnimate = view.window != nil && selectedIndex != index
+        
+        if shouldAnimate {
+            let transition = CATransition()
+            transition.type = .push
+            transition.duration = navigationAnimationDuration
+            transition.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            transition.fillMode = .both
+            transition.isRemovedOnCompletion = true
+            transition.subtype = transitionSubtype(from: selectedIndex, to: index, style: style)
+            transition.startProgress = style == .immersive ? 0.08 : 0
+            transition.endProgress = style == .loading ? 0.86 : 1
+            tabView.wantsLayer = true
+            tabView.layer?.add(transition, forKey: "tabTransition")
+        }
+        
+        tabView.selectTabViewItem(at: index)
+        
+        guard shouldAnimate,
+              let destinationView = tabView.selectedTabViewItem?.view else {
+            return
+        }
+        
+        animateTabPresentation(destinationView, style: style)
+    }
+    
+    private func animateTabPresentation(_ destinationView: NSView, style: TabTransitionStyle) {
+        destinationView.wantsLayer = true
+        let direction: CGFloat
+        let startScale: CGFloat
+        let startOpacity: Float
+        
+        switch style {
+        case .loading:
+            direction = 10
+            startScale = 0.995
+            startOpacity = 0.0
+        case .retry:
+            direction = -8
+            startScale = 0.992
+            startOpacity = 0.18
+        case .immersive:
+            direction = 22
+            startScale = 1.01
+            startOpacity = 0.0
+        case .content:
+            direction = 16
+            startScale = 0.986
+            startOpacity = 0.08
+        }
+        
+        destinationView.alphaValue = 0.84
+        destinationView.layer?.opacity = startOpacity
+        destinationView.layer?.transform = CATransform3DMakeScale(startScale, startScale, 1)
+        destinationView.layer?.sublayerTransform = CATransform3DMakeTranslation(0, direction, 0)
+        
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = navigationAnimationDuration
+            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            destinationView.animator().alphaValue = 1
+        }
+        
+        let opacityAnimation = CABasicAnimation(keyPath: "opacity")
+        opacityAnimation.fromValue = startOpacity
+        opacityAnimation.toValue = 1
+        
+        let transformAnimation = CABasicAnimation(keyPath: "transform")
+        transformAnimation.fromValue = CATransform3DMakeScale(startScale, startScale, 1)
+        transformAnimation.toValue = CATransform3DIdentity
+        
+        let translationAnimation = CABasicAnimation(keyPath: "sublayerTransform")
+        translationAnimation.fromValue = CATransform3DMakeTranslation(0, direction, 0)
+        translationAnimation.toValue = CATransform3DIdentity
+        
+        let group = CAAnimationGroup()
+        group.animations = [opacityAnimation, transformAnimation, translationAnimation]
+        group.duration = navigationAnimationDuration
+        group.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        group.fillMode = .forwards
+        group.isRemovedOnCompletion = false
+        
+        destinationView.layer?.opacity = 1
+        destinationView.layer?.transform = CATransform3DIdentity
+        destinationView.layer?.sublayerTransform = CATransform3DIdentity
+        destinationView.layer?.add(group, forKey: "tabPresentation")
+    }
+    
+    private func transitionSubtype(from previous: Int, to current: Int, style: TabTransitionStyle) -> CATransitionSubtype {
+        switch style {
+        case .immersive:
+            return current > previous ? .fromTop : .fromBottom
+        case .loading:
+            return .fromTop
+        case .retry:
+            return .fromBottom
+        case .content:
+            return current >= previous ? .fromRight : .fromLeft
+        }
     }
     
     deinit {

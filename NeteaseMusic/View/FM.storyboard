@@ -77,14 +77,14 @@
                                                 </connections>
                                             </button>
                                             <button translatesAutoresizingMaskIntoConstraints="NO" id="Uax-7j-HB7">
-                                                <rect key="frame" x="285" y="35" width="50" height="50"/>
-                                                <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="play.circle.Light-L" imagePosition="only" alignment="center" imageScaling="proportionallyUpOrDown" inset="2" id="Q6F-bg-lDm">
+                                                <rect key="frame" x="285" y="35" width="48" height="48"/>
+                                                <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" imagePosition="only" alignment="center" imageScaling="proportionallyUpOrDown" inset="2" id="Q6F-bg-lDm">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="system"/>
                                                 </buttonCell>
                                                 <constraints>
                                                     <constraint firstAttribute="width" secondItem="Uax-7j-HB7" secondAttribute="height" multiplier="1:1" id="GQD-xI-mjT"/>
-                                                    <constraint firstAttribute="width" constant="50" id="nNU-Xq-UvJ"/>
+                                                    <constraint firstAttribute="width" constant="48" id="nNU-Xq-UvJ"/>
                                                 </constraints>
                                                 <connections>
                                                     <action selector="buttonAction:" target="G6x-Kr-Kbk" id="Uz2-Ze-6CW"/>
@@ -214,7 +214,4 @@
             <point key="canvasLocation" x="935" y="325"/>
         </scene>
     </scenes>
-    <resources>
-        <image name="play.circle.Light-L" width="126" height="126"/>
-    </resources>
 </document>

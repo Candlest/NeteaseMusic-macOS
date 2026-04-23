@@ -17,6 +17,22 @@ protocol PageSegmentedControlDelegate {
 
 class PageSegmentedControlViewController: NSViewController {
     @IBOutlet weak var segmentedControl: NSSegmentedControl!
+
+    private var previousPageImage: NSImage? {
+        if #available(macOS 11.0, *) {
+            let config = NSImage.SymbolConfiguration(pointSize: 10, weight: .semibold)
+            return NSImage(systemSymbolName: "chevron.left", accessibilityDescription: nil)?.withSymbolConfiguration(config)
+        }
+        return NSImage(named: .init("icon.sp#icn-page_pre"))
+    }
+
+    private var nextPageImage: NSImage? {
+        if #available(macOS 11.0, *) {
+            let config = NSImage.SymbolConfiguration(pointSize: 10, weight: .semibold)
+            return NSImage(systemSymbolName: "chevron.right", accessibilityDescription: nil)?.withSymbolConfiguration(config)
+        }
+        return NSImage(named: .init("icon.sp#icn-page_next"))
+    }
     
     @IBAction func clicked(_ sender: NSSegmentedControl) {
         guard let delegate = delegate else { return }
@@ -62,7 +78,7 @@ class PageSegmentedControlViewController: NSViewController {
     private var currentPage = -1
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do view setup here.
+        segmentedControl.controlSize = .small
     }
     
     func reloadData() {
@@ -90,10 +106,10 @@ class PageSegmentedControlViewController: NSViewController {
             switch i {
             case 0:
                 // first item
-                segmentedControl.setImage(NSImage(named: .init("icon.sp#icn-page_pre")), forSegment: i)
+                segmentedControl.setImage(previousPageImage, forSegment: i)
             case segmentedControl.segmentCount - 1:
                 // last item
-                segmentedControl.setImage(NSImage(named: .init("icon.sp#icn-page_next")), forSegment: i)
+                segmentedControl.setImage(nextPageImage, forSegment: i)
             case 2 where hideFrontPart:
                 segmentedControl.setLabel("...", forSegment: i)
             case segmentedControl.segmentCount - 3 where hideBackPart:
