@@ -783,14 +783,14 @@
 			);
 			mainGroup = 01957D7F224D01850006FCEC;
 			packageReferences = (
-				01C02C6727F4146500AB94DE /* XCRemoteSwiftPackageReference "SDWebImage" */,
-				01C02C6A27F414A300AB94DE /* XCRemoteSwiftPackageReference "Alamofire" */,
-				01C02C6D27F4167C00AB94DE /* XCRemoteSwiftPackageReference "Sparkle" */,
-				01C02C7027F4181400AB94DE /* XCRemoteSwiftPackageReference "PromiseKit" */,
-				01C02C7327F4189F00AB94DE /* XCRemoteSwiftPackageReference "CryptoSwift" */,
-				01C02C7627F4190500AB94DE /* XCRemoteSwiftPackageReference "HotKey" */,
-				01C02C7927F5555D00AB94DE /* XCRemoteSwiftPackageReference "CocoaLumberjack" */,
-				01EF069E29038D9800CDE9EA /* XCRemoteSwiftPackageReference "GSPlayer" */,
+				01C02C6727F4146500AB94DE /* XCLocalSwiftPackageReference "SDWebImage" */,
+				01C02C6A27F414A300AB94DE /* XCLocalSwiftPackageReference "Alamofire" */,
+				01C02C6D27F4167C00AB94DE /* XCLocalSwiftPackageReference "Sparkle" */,
+				01C02C7027F4181400AB94DE /* XCLocalSwiftPackageReference "PromiseKit" */,
+				01C02C7327F4189F00AB94DE /* XCLocalSwiftPackageReference "CryptoSwift" */,
+				01C02C7627F4190500AB94DE /* XCLocalSwiftPackageReference "HotKey" */,
+				01C02C7927F5555D00AB94DE /* XCLocalSwiftPackageReference "CocoaLumberjack" */,
+				01EF069E29038D9800CDE9EA /* XCLocalSwiftPackageReference "GSPlayer" */,
 			);
 			productRefGroup = 01957D89224D01850006FCEC /* Products */;
 			projectDirPath = "";
@@ -1234,117 +1234,85 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		01C02C6727F4146500AB94DE /* XCRemoteSwiftPackageReference "SDWebImage" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/SDWebImage/SDWebImage";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 5.0.0;
-			};
+/* Begin XCLocalSwiftPackageReference section */
+		01C02C6727F4146500AB94DE /* XCLocalSwiftPackageReference "SDWebImage" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Vendor/SDWebImage;
 		};
-		01C02C6A27F414A300AB94DE /* XCRemoteSwiftPackageReference "Alamofire" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/Alamofire/Alamofire";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 5.0.0;
-			};
+		01C02C6A27F414A300AB94DE /* XCLocalSwiftPackageReference "Alamofire" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Vendor/Alamofire;
 		};
-		01C02C6D27F4167C00AB94DE /* XCRemoteSwiftPackageReference "Sparkle" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/sparkle-project/Sparkle/";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.0.0;
-			};
+		01C02C6D27F4167C00AB94DE /* XCLocalSwiftPackageReference "Sparkle" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Vendor/Sparkle;
 		};
-		01C02C7027F4181400AB94DE /* XCRemoteSwiftPackageReference "PromiseKit" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/mxcl/PromiseKit";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 6.0.0;
-			};
+		01C02C7027F4181400AB94DE /* XCLocalSwiftPackageReference "PromiseKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Vendor/PromiseKit;
 		};
-		01C02C7327F4189F00AB94DE /* XCRemoteSwiftPackageReference "CryptoSwift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/krzyzanowskim/CryptoSwift";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
-			};
+		01C02C7327F4189F00AB94DE /* XCLocalSwiftPackageReference "CryptoSwift" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Vendor/CryptoSwift;
 		};
-		01C02C7627F4190500AB94DE /* XCRemoteSwiftPackageReference "HotKey" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/soffes/HotKey";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.2.0;
-			};
+		01C02C7627F4190500AB94DE /* XCLocalSwiftPackageReference "HotKey" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Vendor/HotKey;
 		};
-		01C02C7927F5555D00AB94DE /* XCRemoteSwiftPackageReference "CocoaLumberjack" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/CocoaLumberjack/CocoaLumberjack";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 3.8.0;
-			};
+		01C02C7927F5555D00AB94DE /* XCLocalSwiftPackageReference "CocoaLumberjack" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Vendor/CocoaLumberjack;
 		};
-		01EF069E29038D9800CDE9EA /* XCRemoteSwiftPackageReference "GSPlayer" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/xjbeta/GSPlayer";
-			requirement = {
-				kind = revision;
-				revision = b0b5033fbb15f5470c031d29b12009ef26ff1d67;
-			};
+		01EF069E29038D9800CDE9EA /* XCLocalSwiftPackageReference "GSPlayer" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Vendor/GSPlayer;
 		};
-/* End XCRemoteSwiftPackageReference section */
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		01C02C6827F4146500AB94DE /* SDWebImage */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 01C02C6727F4146500AB94DE /* XCRemoteSwiftPackageReference "SDWebImage" */;
+			package = 01C02C6727F4146500AB94DE /* XCLocalSwiftPackageReference "SDWebImage" */;
 			productName = SDWebImage;
 		};
 		01C02C6B27F414A300AB94DE /* Alamofire */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 01C02C6A27F414A300AB94DE /* XCRemoteSwiftPackageReference "Alamofire" */;
+			package = 01C02C6A27F414A300AB94DE /* XCLocalSwiftPackageReference "Alamofire" */;
 			productName = Alamofire;
 		};
 		01C02C6E27F4167C00AB94DE /* Sparkle */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 01C02C6D27F4167C00AB94DE /* XCRemoteSwiftPackageReference "Sparkle" */;
+			package = 01C02C6D27F4167C00AB94DE /* XCLocalSwiftPackageReference "Sparkle" */;
 			productName = Sparkle;
 		};
 		01C02C7127F4181400AB94DE /* PromiseKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 01C02C7027F4181400AB94DE /* XCRemoteSwiftPackageReference "PromiseKit" */;
+			package = 01C02C7027F4181400AB94DE /* XCLocalSwiftPackageReference "PromiseKit" */;
 			productName = PromiseKit;
 		};
 		01C02C7427F4189F00AB94DE /* CryptoSwift */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 01C02C7327F4189F00AB94DE /* XCRemoteSwiftPackageReference "CryptoSwift" */;
+			package = 01C02C7327F4189F00AB94DE /* XCLocalSwiftPackageReference "CryptoSwift" */;
 			productName = CryptoSwift;
 		};
 		01C02C7727F4190500AB94DE /* HotKey */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 01C02C7627F4190500AB94DE /* XCRemoteSwiftPackageReference "HotKey" */;
+			package = 01C02C7627F4190500AB94DE /* XCLocalSwiftPackageReference "HotKey" */;
 			productName = HotKey;
 		};
 		01C02C7A27F5555D00AB94DE /* CocoaLumberjack */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 01C02C7927F5555D00AB94DE /* XCRemoteSwiftPackageReference "CocoaLumberjack" */;
+			package = 01C02C7927F5555D00AB94DE /* XCLocalSwiftPackageReference "CocoaLumberjack" */;
 			productName = CocoaLumberjack;
 		};
 		01C02C7C27F5555D00AB94DE /* CocoaLumberjackSwift */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 01C02C7927F5555D00AB94DE /* XCRemoteSwiftPackageReference "CocoaLumberjack" */;
+			package = 01C02C7927F5555D00AB94DE /* XCLocalSwiftPackageReference "CocoaLumberjack" */;
 			productName = CocoaLumberjackSwift;
 		};
 		01EF069F29038D9800CDE9EA /* GSPlayer */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 01EF069E29038D9800CDE9EA /* XCRemoteSwiftPackageReference "GSPlayer" */;
+			package = 01EF069E29038D9800CDE9EA /* XCLocalSwiftPackageReference "GSPlayer" */;
 			productName = GSPlayer;
 		};
 /* End XCSwiftPackageProductDependency section */

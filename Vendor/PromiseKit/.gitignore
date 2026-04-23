@@ -1,0 +1,9 @@
+*.xcodeproj/**/xcuserdata/
+*.xcscmblueprint
+/Carthage
+/.build
+.DS_Store
+DerivedData
+/Extensions/Carthage
+/Tests/JS-A+/build
+.swiftpm/
