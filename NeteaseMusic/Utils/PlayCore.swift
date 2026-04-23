@@ -12,6 +12,81 @@ import AVFoundation
 import PromiseKit
 import GSPlayer
 
+private let mediaCenterTraceURL: URL = {
+    FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent("Library/Logs/NeteaseMusic-media-center.log")
+}()
+
+private let mediaCenterStateURL: URL = {
+    FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent("Library/Logs/NeteaseMusic-media-center-state.json")
+}()
+
+private func mediaCenterEnsureLogDirectory() {
+    let dir = mediaCenterTraceURL.deletingLastPathComponent()
+    try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+}
+
+func mediaCenterTrace(_ message: String) {
+    let line = "[MediaCenter] \(message)"
+    NSLog("%@", line)
+    Log.info(line)
+    
+    let timestamp = ISO8601DateFormatter().string(from: Date())
+    let fileLine = "\(timestamp) \(line)\n"
+    let data = Data(fileLine.utf8)
+    
+    mediaCenterEnsureLogDirectory()
+    if !FileManager.default.fileExists(atPath: mediaCenterTraceURL.path) {
+        FileManager.default.createFile(atPath: mediaCenterTraceURL.path, contents: nil)
+    }
+    if let handle = try? FileHandle(forWritingTo: mediaCenterTraceURL) {
+        defer { handle.closeFile() }
+        handle.seekToEndOfFile()
+        handle.write(data)
+    }
+}
+
+func mediaCenterSanitizedJSON(_ value: Any?) -> Any {
+    guard let value else { return NSNull() }
+    
+    switch value {
+    case let string as String:
+        return string
+    case let number as NSNumber:
+        return number
+    case let bool as Bool:
+        return bool
+    case let int as Int:
+        return int
+    case let double as Double:
+        return double.isFinite ? double : String(double)
+    case let float as Float:
+        return float.isFinite ? float : String(float)
+    case let date as Date:
+        return ISO8601DateFormatter().string(from: date)
+    case let url as URL:
+        return url.absoluteString
+    case let time as CMTime:
+        return time.seconds.isFinite ? time.seconds : String(describing: time)
+    case let array as [Any]:
+        return array.map(mediaCenterSanitizedJSON)
+    case let dictionary as [String: Any]:
+        return dictionary.mapValues(mediaCenterSanitizedJSON)
+    default:
+        return String(describing: value)
+    }
+}
+
+func mediaCenterWriteState(_ state: [String: Any]) {
+    mediaCenterEnsureLogDirectory()
+    guard JSONSerialization.isValidJSONObject(state),
+          let data = try? JSONSerialization.data(withJSONObject: state, options: [.prettyPrinted, .sortedKeys]) else {
+        return
+    }
+    try? data.write(to: mediaCenterStateURL, options: .atomic)
+}
+
 class PlayCore: NSObject {
     static let shared = PlayCore()
     
@@ -25,9 +100,9 @@ class PlayCore: NSObject {
     
 // MARK: - NowPlayingInfoCenter
     
-    let remoteCommandCenter = MPRemoteCommandCenter.shared()
-    let nowPlayingInfoCenter = MPNowPlayingInfoCenter.default()
-    let seekTimer = DispatchSource.makeTimerSource(flags: [], queue: .main)
+    lazy var nowPlayingCoordinator = PlayCoreNowPlayingCoordinator(playCore: self)
+    var currentItemStatusObserver: NSKeyValueObservation?
+    var currentItemLikelyToKeepUpObserver: NSKeyValueObservation?
     
 // MARK: - AVPlayer
     
@@ -39,11 +114,10 @@ class PlayCore: NSObject {
     
     let player: AVPlayer
     
-    @objc dynamic var playProgress: Double = 0 {
-        didSet {
-            updateNowPlayingInfo()
-        }
-    }
+    @objc dynamic var playProgress: Double = 0
+    @objc dynamic var playbackElapsedTime: Double = 0
+    @objc dynamic var playbackDuration: Double = 0
+    @objc dynamic var playbackRate: Double = 0
     
     @objc enum PlayerState: Int {
         case unknown = 0
@@ -55,9 +129,17 @@ class PlayCore: NSObject {
     
     @objc dynamic var playerState: PlayerState = .stopped {
         didSet {
-            updateNowPlayingInfo()
-            let state = MPNowPlayingPlaybackState(rawValue: UInt(playerState.rawValue)) ?? .stopped
-            updateNowPlayingState(state)
+            applySystemPlaybackState()
+            switch playerState {
+            case .playing:
+                refreshNowPlayingInfo(resetPlaybackTime: false)
+            case .paused, .interrupted:
+                updateNowPlayingInfo()
+            case .stopped:
+                clearNowPlayingInfo()
+            case .unknown:
+                break
+            }
         }
     }
 
@@ -71,7 +153,21 @@ class PlayCore: NSObject {
     var playerShouldNextObserver: NSObjectProtocol?
     var playerStateObserver: NSKeyValueObservation?
     
-    @objc dynamic var currentTrack: Track?
+    @objc dynamic var currentTrack: Track? {
+        didSet {
+            guard let currentTrack else {
+                playbackDuration = 0
+                playbackElapsedTime = 0
+                playProgress = 0
+                return
+            }
+            playbackDuration = max(0, Double(currentTrack.duration) / 1000)
+            if oldValue != currentTrack {
+                playbackElapsedTime = 0
+                updateExplicitPlayProgress()
+            }
+        }
+    }
     
     @objc dynamic var playlist: [Track] = [] {
         didSet {
@@ -225,8 +321,6 @@ class PlayCore: NSObject {
     }
     
     func nextSong() {
-        playerState = .unknown
-        
         if fmMode {
             guard let c = currentTrack,
                   let ci = playlist.firstIndex(of: c),
@@ -242,6 +336,9 @@ class PlayCore: NSObject {
             guard repeatMode != .repeatItem else {
                 player.seek(to: CMTime(value: 0, timescale: 1000))
                 player.play()
+                setPlaybackElapsedTime(0)
+                transitionPlaybackState(to: .playing, reason: "repeat current item")
+                refreshNowPlayingInfo(resetPlaybackTime: true)
                 return
             }
             
@@ -276,8 +373,12 @@ class PlayCore: NSObject {
         func playOrPause() {
             if player.rate == 0 {
                 player.play()
+                syncPlaybackProgress()
+                transitionPlaybackState(to: .playing, reason: "toggle play")
             } else {
                 player.pause()
+                syncPlaybackProgress()
+                transitionPlaybackState(to: .paused, reason: "toggle pause")
             }
         }
         if currentTrack != nil {
@@ -322,16 +423,18 @@ class PlayCore: NSObject {
     }
     
     func stop() {
-        playerState = .stopped
+        transitionPlaybackState(to: .stopped, reason: "stop")
         player.pause()
         player.currentItem?.cancelPendingSeeks()
         player.currentItem?.asset.cancelLoading()
+        invalidateCurrentItemObservers()
         player.replaceCurrentItem(with: nil)
         currentTrack = nil
         internalPlaylist.removeAll()
         internalPlaylistIndex = -1
         pnItemType = .withoutPreviousAndNext
         playlist.removeAll()
+        clearNowPlayingInfo()
     }
     
     func toggleRepeatMode() {
@@ -361,7 +464,7 @@ class PlayCore: NSObject {
     private func play(_ track: Track,
                       time: CMTime = CMTime(value: 0, timescale: 1000)) {
         
-        currentTrack = track
+        stageTrack(track, elapsedTime: time.seconds)
         
         if let song = track.song,
            song.urlValid {
@@ -434,10 +537,12 @@ class PlayCore: NSObject {
             item.canUseNetworkResourcesForLiveStreamingWhilePaused = true
             
             DispatchQueue.main.async {
+                self.observeCurrentItem(item)
                 self.player.replaceCurrentItem(with: item)
                 self.player.play()
-                self.playerState = .playing
-                self.initNowPlayingInfo()
+                self.transitionPlaybackState(to: .playing, reason: "start track \(track.id)")
+                self.refreshNowPlayingInfo(resetPlaybackTime: true)
+                mediaCenterTrace("replaceCurrentItem track=\(track.id) name=\(track.name)")
                 
                 self.historys.removeAll {
                     $0.id == track.id
@@ -568,14 +673,19 @@ class PlayCore: NSObject {
                 item.canUseNetworkResourcesForLiveStreamingWhilePaused = true
                 
                 DispatchQueue.main.async {
+                    self.observeCurrentItem(item)
                     self.player.replaceCurrentItem(with: item)
                     if let time {
                         self.player.seek(to: time)
+                        self.setPlaybackElapsedTime(time.seconds)
+                    } else {
+                        self.setPlaybackElapsedTime(0)
                     }
                     
                     self.player.play()
-                    self.playerState = .playing
-                    self.initNowPlayingInfo()
+                    self.transitionPlaybackState(to: .playing, reason: "reload track \(track.id)")
+                    self.refreshNowPlayingInfo(resetPlaybackTime: time == nil)
+                    mediaCenterTrace("reloadCurrentItem track=\(track.id) name=\(track.name)")
                 }
             }
         }
@@ -593,11 +703,9 @@ class PlayCore: NSObject {
     
     func setupSystemMediaKeys() {
         if #available(macOS 10.13, *) {
-            if Preferences.shared.useSystemMediaControl {
-                setupRemoteCommandCenter()
-            } else {
-                updateNowPlayingState(.stopped)
-            }
+            activateNowPlayingRegistration()
+            enableRemoteCommands()
+            dumpMediaCenterDebugState(reason: "setupSystemMediaKeys")
         }
     }
     
@@ -619,6 +727,7 @@ class PlayCore: NSObject {
             }
             
             timeControlStatus = newStatus
+            mediaCenterTrace("timeControlStatus=\(String(describing: newStatus.rawValue)) currentTrack=\(self.currentTrack?.id ?? -1) rate=\(player.rate)")
         }
         
         let timeScale = CMTimeScale(NSEC_PER_SEC)
@@ -628,15 +737,11 @@ class PlayCore: NSObject {
         playerStateObserver = player.observe(\.rate, options: [.initial, .new]) { player, _ in
             guard player.status == .readyToPlay else { return }
             
-            self.playerState = player.rate.isZero ? .paused : .playing
+            mediaCenterTrace("playerRate=\(player.rate) state=\(self.playerState.rawValue) currentTrack=\(self.currentTrack?.id ?? -1)")
         }
         
         periodicTimeObserverToken = player .addPeriodicTimeObserver(forInterval: time, queue: .main) { [weak self] time in
-            let pc = PlayCore.shared
-            let player = pc.player
-            
-            self?.playProgress = player.playProgress
-            
+            self?.syncPlaybackProgress(from: time)
         }
         
         playerShouldNextObserver = NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: nil, queue: .main) { _ in
@@ -652,6 +757,7 @@ class PlayCore: NSObject {
         }
         playerStateObserver?.invalidate()
         timeControlStautsObserver?.invalidate()
+        invalidateCurrentItemObservers()
         
         if let obs = playerShouldNextObserver {
             NotificationCenter.default.removeObserver(obs)
@@ -662,5 +768,97 @@ class PlayCore: NSObject {
     
     deinit {
         deinitPlayerObservers()
+    }
+
+    private func observeCurrentItem(_ item: AVPlayerItem) {
+        invalidateCurrentItemObservers()
+        currentItemStatusObserver = item.observe(\.status, options: [.initial, .new]) { [weak self] item, _ in
+            guard let self else { return }
+            DispatchQueue.main.async {
+                mediaCenterTrace("itemStatus=\(item.status.rawValue) currentTrack=\(self.currentTrack?.id ?? -1)")
+                switch item.status {
+                case .readyToPlay:
+                    mediaCenterTrace("itemReadyToPlay")
+                case .failed:
+                    self.transitionPlaybackState(to: .stopped, reason: "item failed")
+                    self.clearNowPlayingInfo()
+                case .unknown:
+                    break
+                @unknown default:
+                    break
+                }
+            }
+        }
+
+        currentItemLikelyToKeepUpObserver = item.observe(\.isPlaybackLikelyToKeepUp, options: [.initial, .new]) { [weak self] item, _ in
+            guard let self else { return }
+            guard item.isPlaybackLikelyToKeepUp else { return }
+            DispatchQueue.main.async {
+                mediaCenterTrace("itemLikelyToKeepUp=true currentTrack=\(self.currentTrack?.id ?? -1)")
+            }
+        }
+    }
+
+    private func invalidateCurrentItemObservers() {
+        currentItemStatusObserver?.invalidate()
+        currentItemStatusObserver = nil
+        currentItemLikelyToKeepUpObserver?.invalidate()
+        currentItemLikelyToKeepUpObserver = nil
+    }
+
+    private func applySystemPlaybackState() {
+        switch playerState {
+        case .playing:
+            updateNowPlayingState(.playing)
+        case .paused:
+            updateNowPlayingState(.paused)
+        case .stopped:
+            updateNowPlayingState(.stopped)
+        case .interrupted:
+            updateNowPlayingState(.interrupted)
+        case .unknown:
+            mediaCenterTrace("skip playbackState update for unknown state")
+        }
+    }
+    
+    var isCurrentTrackPlaying: Bool {
+        currentTrack != nil && playerState == .playing
+    }
+    
+    func stageTrack(_ track: Track, elapsedTime: Double = 0) {
+        currentTrack = track
+        setPlaybackElapsedTime(elapsedTime)
+    }
+    
+    func setPlaybackElapsedTime(_ seconds: Double) {
+        playbackElapsedTime = sanitizePlaybackSeconds(seconds)
+        updateExplicitPlayProgress()
+    }
+    
+    func syncPlaybackProgress(from time: CMTime? = nil) {
+        let seconds = (time ?? player.currentTime()).seconds
+        setPlaybackElapsedTime(seconds)
+        guard isCurrentTrackPlaying else { return }
+        updateNowPlayingInfo()
+    }
+    
+    func transitionPlaybackState(to state: PlayerState, reason: String) {
+        let previousState = playerState
+        playbackRate = state == .playing ? 1 : 0
+        mediaCenterTrace("playerState \(previousState.rawValue)->\(state.rawValue) reason=\(reason)")
+        playerState = state
+    }
+    
+    func sanitizePlaybackSeconds(_ seconds: Double) -> Double {
+        guard seconds.isFinite else { return 0 }
+        return max(0, seconds)
+    }
+    
+    func updateExplicitPlayProgress() {
+        guard playbackDuration > 0 else {
+            playProgress = 0
+            return
+        }
+        playProgress = min(max(playbackElapsedTime / playbackDuration, 0), 1)
     }
 }

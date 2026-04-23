@@ -9,7 +9,6 @@
 import Cocoa
 import SDWebImage
 import GSPlayer
-import Sparkle
 
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate {
@@ -22,10 +21,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Insert code here to initialize your application
         Log.setUp()
+        mediaCenterTrace("app launch bundlePath=\(Bundle.main.bundlePath) executablePath=\(Bundle.main.executablePath ?? "") pid=\(ProcessInfo.processInfo.processIdentifier)")
         
         vcm.initAllHotKeys()
         
         pc.setupSystemMediaKeys()
+        pc.dumpMediaCenterDebugState(reason: "app launch")
         pc.api.startNRMListening()
         
         initCache()

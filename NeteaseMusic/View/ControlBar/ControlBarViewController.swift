@@ -85,7 +85,7 @@ class ControlBarViewController: NSViewController {
         switch sender {
         case durationSlider:
             let time = CMTime(seconds: sender.doubleValue, preferredTimescale: 1000)
-            PlayCore.shared.player.seek(to: time) { _ in }
+            PlayCore.shared.seekToPlaybackTime(time)
             if let eventType = NSApp.currentEvent?.type,
                 eventType == .leftMouseUp {
                 durationSlider.ignoreValueUpdate = false
@@ -140,14 +140,14 @@ class ControlBarViewController: NSViewController {
                 return
             }
             
-            let cd = player.currentDuration
-            let td = player.totalDuration
+            let cd = pc.playbackElapsedTime
+            let td = pc.playbackDuration
             
             if td != slider.maxValue {
                 slider.maxValue = td
             }
             slider.updateValue(cd)
-            slider.cachedDoubleValue = player.currentBufferDuration
+            slider.cachedDoubleValue = max(0, player.currentBufferDuration)
             
             textFiled.stringValue = "\(cd.durationFormatter()) / \(td.durationFormatter())"
         }

@@ -33,7 +33,7 @@ class PlayingSongViewController: NSViewController {
             break
         }
         
-        let time = PlayCore.shared.player.currentDuration
+        let time = PlayCore.shared.playbackElapsedTime
         lyricViewController()?.updateLyric(time)
     }
     
@@ -57,8 +57,8 @@ class PlayingSongViewController: NSViewController {
             self?.initView()
         }
         
-        playerStatueObserver = PlayCore.shared.observe(\.timeControlStatus, options: [.initial, .new]) { [weak self] (player, changes) in
-            switch player.timeControlStatus {
+        playerStatueObserver = PlayCore.shared.observe(\.playerState, options: [.initial, .new]) { [weak self] (player, changes) in
+            switch player.playerState {
             case .playing:
                 self?.cdwarpImageView.resumeAnimation()
                 self?.cdImgImageView.resumeAnimation()
@@ -143,7 +143,7 @@ class PlayingSongViewController: NSViewController {
         var toValue: Double = 0
         var fromValue: Double = 0
         let value = Double.pi / 5.3
-        switch PlayCore.shared.player.timeControlStatus {
+        switch PlayCore.shared.playerState {
         case .playing:
             fromValue = value
         case .paused:

@@ -142,7 +142,7 @@ class LyricViewController: NSViewController {
         let pc = PlayCore.shared
         guard playProgressObserver == nil else { return }
         playProgressObserver = pc.observe(\.playProgress, options: [.initial, .new]) { [weak self] pc, _ in
-            let time = pc.player.currentDuration
+            let time = pc.playbackElapsedTime
             self?.updateLyric(time)
         }
     }
@@ -170,7 +170,7 @@ class LyricViewController: NSViewController {
     override func mouseExited(with event: NSEvent) {
         mouseInLyric = false
         autoScrollLyrics = true
-        let time = PlayCore.shared.player.currentDuration
+        let time = PlayCore.shared.playbackElapsedTime
         updateLyric(time)
     }
     
